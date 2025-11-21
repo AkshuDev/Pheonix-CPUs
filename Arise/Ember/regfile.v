@@ -1,9 +1,11 @@
-// Register File - NULL, G0-G14, SF, LR, SP (5 bits)
+`timescale 1ns/1ps
+
+// Register File - NULL, G0-G30, SF, LR, SP (6 bits)
 
 module regfile #(
     parameter DATA_W = 64,
-    parameter NUM_REGS = 19,
-    parameter REG_ADDR_W = 5 // 5 bits 
+    parameter NUM_REGS = 34,
+    parameter REG_ADDR_W = 6 // 6 bits 
 )
 (
     input wire clk, // Clock
@@ -30,9 +32,9 @@ module regfile #(
     always @(posedge clk) begin
         if (rst) begin
             // Reset is enabled
-            regs[16] <= {DATA_W{1'b0}};
-            regs[17] <= {DATA_W{1'b0}};
-            regs[18] <= {DATA_W{16'hFFFF}};
+            regs[31] <= {DATA_W{1'b0}};
+            regs[32] <= {DATA_W{1'b0}};
+            regs[33] <= {{(DATA_W-16){1'b0}}, 16'hFFFF};
         end else begin
             // Write is on
             if (wr_en && (wr1_addr != {REG_ADDR_W{1'b0}})) begin // Reg is not NULL
