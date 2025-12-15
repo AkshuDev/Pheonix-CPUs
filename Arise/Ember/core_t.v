@@ -7,7 +7,7 @@ module core_t(
     // Instantiate the DUT
     core dut (
         .clk(clk),
-        .reset(reset)
+        .reset(1'b0)
     );
 
 
@@ -17,10 +17,6 @@ module core_t(
     task load_program;
         integer i;
     begin
-        // Clear IMEM
-        for (i = 0; i < 1024; i = i + 1)
-            dut.imem[i] = 8'h00;
-
         //------------------------------------------------------
         // Example Program:
         //
@@ -30,7 +26,7 @@ module core_t(
         //------------------------------------------------------
 
         // Fake ADD instruction (opcode < 0x100)
-        dut.imem[0] = 8'h01;    // (your decoder will interpret this)
+        dut.imem[0] = 8'h01;
         dut.imem[1] = 8'h12;
         dut.imem[2] = 8'h00;
         dut.imem[3] = 8'h00;
@@ -39,7 +35,7 @@ module core_t(
         dut.imem[4] = 8'h00;
         dut.imem[5] = 8'h01;    // opcode low byte
         dut.imem[6] = 8'h00;
-        dut.imem[7] = 8'h08;    // immediate-present bit (your format)
+        dut.imem[7] = 8'h08;    // immediate-present bit
 
         // Immediate: 0x0000_1234
         dut.imem[8]  = 8'h34;
@@ -61,15 +57,13 @@ module core_t(
     initial begin
         $display("=== CORE TESTBENCH START ===");
 
-        // Load program into dut.imem
-        load_program();
-
+        
         // Hold reset for some cycles
-        #20;
         $display("[%0t] Reset Deasserted", $time);
 
         // Run for sufficient cycles
-        #600;
+        // Load program into dut.imem
+        load_program();
 
         $display("=== CORE TESTBENCH END ===");
         $finish;

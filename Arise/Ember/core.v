@@ -116,7 +116,8 @@ module core (
     integer i;
 
     initial begin
-        for(i=0;i<1024;i=i+1) imem[i] = 8'h00;
+        if (reset)
+            for(i=0;i<1024;i=i+1) imem[i] = 8'h00;
     end
 
     reg pending_imm_expected;
@@ -193,6 +194,7 @@ module core (
                         cur_imm <= imm_out;
                         cur_imm_present <= imm_present;
                         state <= S_EXEC;
+                        $display("Fetch Cycle Complete -\n\tOpcode: %h\n\tMode: %b\n\tRegisters: %d (src), %d (dest)\n\tImm: %h\n\tFlags: %b\n\tImm Present: %b\n", cur_opcode, cur_mode, cur_rsrc, cur_rdest, cur_imm, cur_flags, cur_imm_present);
                     end
                 end
 
@@ -237,6 +239,8 @@ module core (
                                 reg_we   <= 1'b1;
                                 rwr_addr <= cur_rdest;
                                 wr_data  <= dm_rd_data;
+
+                                $display("Exec Done!\n\tWr Addr: %h\n\tWr Data: %h\n", rwr_addr, wr_data);
 
                                 state <= S_FETCH;
                             end

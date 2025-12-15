@@ -17,7 +17,6 @@ void Vcore_t___024root___eval_triggers__act(Vcore_t___024root* vlSelf) {
     // Body
     vlSelfRef.__VactTriggered.setBit(0U, ((IData)(vlSelfRef.clk) 
                                           & (~ (IData)(vlSelfRef.__Vtrigprevexpr___TOP__clk__0))));
-    vlSelfRef.__VactTriggered.setBit(1U, vlSelfRef.__VdlySched.awaitingCurrentTime());
     vlSelfRef.__Vtrigprevexpr___TOP__clk__0 = vlSelfRef.clk;
 #ifdef VL_DEBUG
     if (VL_UNLIKELY(vlSymsp->_vm_contextp__->debug())) {

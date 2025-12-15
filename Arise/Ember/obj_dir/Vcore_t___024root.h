@@ -6,7 +6,6 @@
 #define VERILATED_VCORE_T___024ROOT_H_  // guard
 
 #include "verilated.h"
-#include "verilated_timing.h"
 
 
 class Vcore_t__Syms;
@@ -88,11 +87,9 @@ class alignas(VL_CACHE_LINE_BYTES) Vcore_t___024root final : public VerilatedMod
         VlUnpacked<QData/*63:0*/, 256> core_t__DOT__dut__DOT__dmem__DOT__mem;
         VlUnpacked<CData/*0:0*/, 2> __Vm_traceActivity;
     };
-    VlNBACommitQueue<VlUnpacked<QData/*63:0*/, 256>, false, QData/*63:0*/, 1> __VdlyCommitQueuecore_t__DOT__dut__DOT__dmem__DOT__mem;
-    VlDelayScheduler __VdlySched;
     VlTriggerVec<1> __VstlTriggered;
-    VlTriggerVec<2> __VactTriggered;
-    VlTriggerVec<2> __VnbaTriggered;
+    VlTriggerVec<1> __VactTriggered;
+    VlTriggerVec<1> __VnbaTriggered;
 
     // INTERNAL VARIABLES
     Vcore_t__Syms* const vlSymsp;

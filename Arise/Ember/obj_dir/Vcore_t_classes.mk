@@ -8,7 +8,7 @@
 # C11 constructs required?  0/1 (always on now)
 VM_C11 = 1
 # Timing enabled?  0/1
-VM_TIMING = 1
+VM_TIMING = 0
 # Coverage output mode?  0/1 (from --coverage)
 VM_COVERAGE = 0
 # Parallel builds?  0/1 (from --output-split)
@@ -49,7 +49,6 @@ VM_SUPPORT_SLOW += \
 VM_GLOBAL_FAST += \
   verilated \
   verilated_vcd_c \
-  verilated_timing \
   verilated_threads \
 
 # Global classes, need linked once per executable, non-fast-path, compile with low/medium optimization

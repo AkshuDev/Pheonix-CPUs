@@ -10,7 +10,6 @@ void Vcore_t___024root___ctor_var_reset(Vcore_t___024root* vlSelf);
 
 Vcore_t___024root::Vcore_t___024root(Vcore_t__Syms* symsp, const char* v__name)
     : VerilatedModule{v__name}
-    , __VdlySched{*symsp->_vm_contextp__}
     , vlSymsp{symsp}
  {
     // Reset structure values

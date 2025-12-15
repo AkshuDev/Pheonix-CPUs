@@ -66,9 +66,12 @@ void Vcore_t::eval_step() {
 
 //============================================================
 // Events and timing
-bool Vcore_t::eventsPending() { return !vlSymsp->TOP.__VdlySched.empty(); }
+bool Vcore_t::eventsPending() { return false; }
 
-uint64_t Vcore_t::nextTimeSlot() { return vlSymsp->TOP.__VdlySched.nextTimeSlot(); }
+uint64_t Vcore_t::nextTimeSlot() {
+    VL_FATAL_MT(__FILE__, __LINE__, "", "No delays in the design");
+    return 0;
+}
 
 //============================================================
 // Utilities

@@ -13,18 +13,41 @@ VL_ATTR_COLD void Vcore_t___024root___eval_static(Vcore_t___024root* vlSelf) {
     vlSelfRef.__Vtrigprevexpr___TOP__clk__0 = vlSelfRef.clk;
 }
 
+VL_ATTR_COLD void Vcore_t___024root___eval_initial__TOP(Vcore_t___024root* vlSelf);
+
+VL_ATTR_COLD void Vcore_t___024root___eval_initial(Vcore_t___024root* vlSelf) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+    Vcore_t___024root___eval_initial\n"); );
+    Vcore_t__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
+    // Body
+    Vcore_t___024root___eval_initial__TOP(vlSelf);
+}
+
 VL_ATTR_COLD void Vcore_t___024root___eval_initial__TOP(Vcore_t___024root* vlSelf) {
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vcore_t___024root___eval_initial__TOP\n"); );
     Vcore_t__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    vlSelfRef.core_t__DOT__dut__DOT__i = 0U;
-    while (VL_GTS_III(32, 0x400U, vlSelfRef.core_t__DOT__dut__DOT__i)) {
-        vlSelfRef.core_t__DOT__dut__DOT__imem[(0x3ffU 
-                                               & vlSelfRef.core_t__DOT__dut__DOT__i)] = 0U;
-        vlSelfRef.core_t__DOT__dut__DOT__i = ((IData)(1U) 
-                                              + vlSelfRef.core_t__DOT__dut__DOT__i);
-    }
+    VL_WRITEF_NX("=== CORE TESTBENCH START ===\n[%0t] Reset Deasserted\n",0,
+                 64,VL_TIME_UNITED_Q(1000),-9);
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0U] = 1U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[1U] = 0x12U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[2U] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[3U] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[4U] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[5U] = 1U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[6U] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[7U] = 8U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[8U] = 0x34U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[9U] = 0x12U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xaU] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xbU] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xcU] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xdU] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xeU] = 0U;
+    vlSelfRef.core_t__DOT__dut__DOT__imem[0xfU] = 0U;
+    VL_WRITEF_NX("PROGRAM LOADED.\n=== CORE TESTBENCH END ===\n",0);
+    VL_FINISH_MT("core_t.v", 69, "");
 }
 
 VL_ATTR_COLD void Vcore_t___024root___eval_final(Vcore_t___024root* vlSelf) {
@@ -143,9 +166,6 @@ VL_ATTR_COLD void Vcore_t___024root___dump_triggers__act(Vcore_t___024root* vlSe
     if ((1ULL & vlSelfRef.__VactTriggered.word(0U))) {
         VL_DBG_MSGF("         'act' region trigger index 0 is active: @(posedge clk)\n");
     }
-    if ((2ULL & vlSelfRef.__VactTriggered.word(0U))) {
-        VL_DBG_MSGF("         'act' region trigger index 1 is active: @([true] __VdlySched.awaitingCurrentTime())\n");
-    }
 }
 #endif  // VL_DEBUG
 
@@ -160,9 +180,6 @@ VL_ATTR_COLD void Vcore_t___024root___dump_triggers__nba(Vcore_t___024root* vlSe
     }
     if ((1ULL & vlSelfRef.__VnbaTriggered.word(0U))) {
         VL_DBG_MSGF("         'nba' region trigger index 0 is active: @(posedge clk)\n");
-    }
-    if ((2ULL & vlSelfRef.__VnbaTriggered.word(0U))) {
-        VL_DBG_MSGF("         'nba' region trigger index 1 is active: @([true] __VdlySched.awaitingCurrentTime())\n");
     }
 }
 #endif  // VL_DEBUG

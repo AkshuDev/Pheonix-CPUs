@@ -75,12 +75,9 @@ void Vcore_t___024root__trace_chg_0_sub_0(Vcore_t___024root* vlSelf, VerilatedVc
         bufp->chgIData(oldp+58,(vlSelfRef.core_t__DOT__dut__DOT__fetch_inst_latched),32);
         bufp->chgQData(oldp+59,(vlSelfRef.core_t__DOT__dut__DOT__fetch_imm_latched),64);
         bufp->chgBit(oldp+61,(vlSelfRef.core_t__DOT__dut__DOT__dec__DOT__waiting_for_imm));
-        bufp->chgIData(oldp+62,(vlSelfRef.core_t__DOT__dut__DOT__dmem__DOT__i),32);
     }
-    bufp->chgBit(oldp+63,(vlSelfRef.clk));
-    bufp->chgBit(oldp+64,(vlSelfRef.reset));
-    bufp->chgIData(oldp+65,(vlSelfRef.core_t__DOT__load_program__Vstatic__i),32);
-    bufp->chgIData(oldp+66,(vlSelfRef.core_t__DOT__dut__DOT__i),32);
+    bufp->chgBit(oldp+62,(vlSelfRef.clk));
+    bufp->chgBit(oldp+63,(vlSelfRef.reset));
 }
 
 void Vcore_t___024root__trace_cleanup(void* voidSelf, VerilatedVcd* /*unused*/) {
