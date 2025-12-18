@@ -1,14 +1,16 @@
 `timescale 1ns/1ps
 
-module core_t(
-    input wire clk,
-    input wire reset
-); 
+module core_t;
+    reg clk;
+    reg rst;
+
     // Instantiate the DUT
     core dut (
         .clk(clk),
-        .reset(1'b0)
+        .reset(rst)
     );
+
+    always #5 clk = ~clk;
 
 
     // --------------------------------------------------
@@ -26,26 +28,10 @@ module core_t(
         //------------------------------------------------------
 
         // Fake ADD instruction (opcode < 0x100)
-        dut.imem[0] = 8'h01;
-        dut.imem[1] = 8'h12;
-        dut.imem[2] = 8'h00;
-        dut.imem[3] = 8'h00;
-
-        // LOAD_FIXED with immediate (opcode 0x100)
-        dut.imem[4] = 8'h00;
-        dut.imem[5] = 8'h01;    // opcode low byte
-        dut.imem[6] = 8'h00;
-        dut.imem[7] = 8'h08;    // immediate-present bit
-
-        // Immediate: 0x0000_1234
-        dut.imem[8]  = 8'h34;
-        dut.imem[9]  = 8'h12;
-        dut.imem[10] = 8'h00;
-        dut.imem[11] = 8'h00;
-        dut.imem[12] = 8'h00;
-        dut.imem[13] = 8'h00;
-        dut.imem[14] = 8'h00;
-        dut.imem[15] = 8'h00;
+        dut.imem[0] = 8'b00000000;
+        dut.imem[1] = 8'b00010001;
+        dut.imem[2] = 8'b00000100;
+        dut.imem[3] = 8'b00100001;
 
         $display("PROGRAM LOADED.");
     end
@@ -59,6 +45,11 @@ module core_t(
 
         
         // Hold reset for some cycles
+        rst = 1;
+        clk = 0;
+        #20 rst = 0;
+
+        @(posedge clk);
         $display("[%0t] Reset Deasserted", $time);
 
         // Run for sufficient cycles

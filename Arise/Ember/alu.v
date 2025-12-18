@@ -20,10 +20,10 @@ module alu #(
     output reg overflow,
     
     // Flags
-    output wire eq, // Equals
-    output wire lt, // Less Than
-    output wire gt, // Greater Than
-    output wire zero
+    output reg eq, // Equals
+    output reg lt, // Less Than
+    output reg gt, // Greater Than
+    output reg zero
 );
     always @(posedge clk) begin
         carry <= 1'b0;

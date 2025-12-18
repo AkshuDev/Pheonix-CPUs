@@ -17,8 +17,8 @@ module core (
     wire [5:0] rsrc_out, rdest_out;
     wire [3:0] flags_out;
     wire [63:0] imm_out;
-    wire imm_present;
-    wire alu_en;
+    reg imm_present;
+    reg alu_en;
     wire [7:0] alu_op;
     wire mem_rd;
     wire mem_wr;
@@ -104,7 +104,7 @@ module core (
 
     localparam[63:0] FIXED_MEM_BASE = 64'h0000_0000_0000_1000;
     
-    typedef enum reg [1:0] {S_FETCH=2'b00, S_WAIT_DEC=2'b01, S_EXEC=2'b10} state_t;
+    typedef enum logic [1:0] {S_FETCH=2'b00, S_WAIT_DEC=2'b01, S_EXEC=2'b10} state_t;
     reg [1:0] state;
 
     reg [11:0] cur_opcode;
@@ -130,8 +130,10 @@ module core (
         if (reset) begin
             pc <= 32'h0;
             fetched_valid <= 1'b0;
+            fetched_inst <= 31'b0;
             fetched_imm_valid <= 1'b0;
             pending_imm_expected <= 1'b0;
+            $display("Reset Completed!\n");
         end else begin
             fetched_valid <= 1'b0;
             fetched_imm_valid <= 1'b0;
@@ -185,6 +187,7 @@ module core (
 
             case (state) 
                 S_FETCH: begin
+                    $display("Fetching....\n");
                     if (decoded_valid) begin
                         cur_opcode <= opcode_out;
                         cur_mode <= mode_out;
@@ -200,6 +203,7 @@ module core (
 
                 S_EXEC: begin
                     // Default values each cycle
+                    $display("Executing...\n");
                     reg_we   <= 1'b0;
                     alu_valid <= 1'b0;
                     dm_rd_en <= 1'b0;

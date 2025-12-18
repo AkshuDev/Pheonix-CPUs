@@ -19,12 +19,12 @@ module decoder #(
     output reg [7:0] alu_op,
 
     // Signals
-    output wire alu_en,
-    output wire mem_read,
-    output wire mem_write,
-    output wire reg_write,
-    output wire imm_en,
-    output wire decoded_valid,
+    output reg alu_en,
+    output reg mem_read,
+    output reg mem_write,
+    output reg reg_write,
+    output reg imm_en,
+    output reg decoded_valid,
 
     // Basic
     input wire clk,
@@ -35,6 +35,7 @@ module decoder #(
         if (rst) begin
             waiting_for_imm <= 0;
             decoded_valid <= 0;
+            $display("Decoder, Reset completed!\n");
         end else begin
             decoded_valid <= 0;
 
@@ -57,6 +58,8 @@ module decoder #(
                 mem_write <= 0;
                 reg_write <= 0;
                 alu_en <= 0;
+
+                $display("[DECODER] Op: %b\n\tMode: %b\n\tRSrc: %b\n\tRDest: %b\n\tFlags: %b\n", opcode, mode, rsrc, rdest, flags);
 
                 if (inst[31:20] < 12'h100) begin
                     alu_en <= 1;

@@ -21,6 +21,7 @@ module mem #(
         if (rst) begin
             for (i=0;i<DEPTH;i=i+1) mem[i] <= {DATA_W{1'b0}};
             rd_data <= {DATA_W{1'b0}};
+            $display("Resetted Memory!\n");
         end else begin
             if (wr_en) mem[word_addr] <= wr_data;
             if (rd_en) rd_data <= mem[word_addr];

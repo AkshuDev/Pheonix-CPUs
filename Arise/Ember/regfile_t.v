@@ -1,20 +1,23 @@
 `timescale 1ns/1ps
 
-module regfile_test #(
-    parameter DATA_W = 64,
-    parameter REG_COUNT = 32
-)(
-    input logic clk,
-    input logic reset
-);
+module regfile_test;
+    localparam DATA_W = 64;
+    localparam REG_COUNT = 32;
+    localparam REG_ADDR_B = 6;
+
+    reg clk;
+    reg reset;
+
+    always #5 clk = ~clk;
+
     // DUT signals
     reg wr_en;
-    reg [$clog2(REG_COUNT)-1:0] wr1_addr;
+    reg [REG_ADDR_B-1:0] wr1_addr;
     reg [DATA_W-1:0] wr1_data;
-    reg [$clog2(REG_COUNT)-1:0] rd1_addr;
-    reg [DATA_W-1:0] rd1_out;
-    reg [$clog2(REG_COUNT)-1:0] rd2_addr;
-    reg [DATA_W-1:0] rd2_out;
+    reg [REG_ADDR_B-1:0] rd1_addr;
+    wire [DATA_W-1:0] rd1_out;
+    reg [REG_ADDR_B-1:0] rd2_addr;
+    wire [DATA_W-1:0] rd2_out;
 
     reg [31:0] temp_buf;
 
@@ -44,22 +47,39 @@ module regfile_test #(
         wr1_data = 0;
     end
 
-    // Optional stimulus for debugging
+
     initial begin
-        wait (!reset);
+        clk = 0;
+        reset = 1;
+        wr_en = 0;
+        wr1_addr = 0;
+        wr1_data = 0;
+        rd1_addr = 0;
+        rd2_addr = 0;
+
+        #20 reset = 0;
+        
+        @(posedge clk);
         // simple deterministic write
         wr_en = 1;
-        wr1_addr = 0;
+        wr1_addr = 1;
         wr1_data = 64'hDEADBEEFCAFEBABE;
         #10;
         wr_en = 0;
         #10;
+        rd1_addr = 1;
+        #10;
+        $display("[%0t] WRITE: %h, READ: %h\n", $time, wr1_data, rd1_out);
 
         wr_en = 1;
-        wr1_addr = 1;
+        wr1_addr = 2;
         wr1_data = 64'h0123456789ABCDEF;
         #10;
         wr_en = 0;
+        #10;
+        rd1_addr = 2;
+        #10;
+        $display("[%0t] WRITE: %h, READ: %h\n", $time, wr1_data, rd1_out);
 
         // random writes
         for (i=0; i<10; i=i+1) begin
@@ -68,8 +88,10 @@ module regfile_test #(
             temp_buf = $urandom % REG_COUNT;
             wr1_addr = temp_buf[4:0];
             wr1_data = {32'b0, $urandom};
+            $display("[%0t] WRITE: %h\n", $time, wr1_data);
         end
         wr_en = 0;
+        $finish;
     end
 
 endmodule
