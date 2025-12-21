@@ -1,63 +1,77 @@
 `timescale 1ns/1ps
 
-module core_t;
+module tb_core;
+
     reg clk;
     reg rst;
 
-    // Instantiate the DUT
-    core dut (
+    reg [63:0] inst; // 2 instruction
+
+    core uut (
         .clk(clk),
-        .reset(rst)
+        .rst(rst)
     );
 
-    always #5 clk = ~clk;
-
-
-    // --------------------------------------------------
-    // Test Program Loader
-    // --------------------------------------------------
-    task load_program;
-        integer i;
-    begin
-        //------------------------------------------------------
-        // Example Program:
-        //
-        // 0x0000: ADD R1, R2   (dummy encoding)
-        // 0x0004: LOAD_FIXED R3, [imm]
-        // 0x0008: 64-bit immediate 0x0000_0000_0000_1234
-        //------------------------------------------------------
-
-        // Fake ADD instruction (opcode < 0x100)
-        dut.imem[0] = 8'b00000000;
-        dut.imem[1] = 8'b00010001;
-        dut.imem[2] = 8'b00000100;
-        dut.imem[3] = 8'b00100001;
-
-        $display("PROGRAM LOADED.");
-    end
-    endtask
-
-    // --------------------------------------------------
-    // Simulation Control
-    // --------------------------------------------------
     initial begin
-        $display("=== CORE TESTBENCH START ===");
-
-        
-        // Hold reset for some cycles
-        rst = 1;
         clk = 0;
-        #20 rst = 0;
+        forever #5 clk = ~clk;
+    end
+
+    initial begin
+        inst = {12'h115, 4'h2, 6'h08, 6'h01, 4'h1, 12'h001, 4'h1, 6'h01, 6'h02, 4'h1};
+        rst = 1'b1;
+
+        #50;
+        rst = 1'b0;
+
+        $display("RESET DEASSERTED");
 
         @(posedge clk);
-        $display("[%0t] Reset Deasserted", $time);
 
-        // Run for sufficient cycles
-        // Load program into dut.imem
-        load_program();
+        #10;
 
-        $display("=== CORE TESTBENCH END ===");
+        uut.l1i.mem[4] = inst[7:0];
+        uut.l1i.mem[5] = inst[15:8];
+        uut.l1i.mem[6] = inst[23:16];
+        uut.l1i.mem[7] = inst[31:24];
+        uut.l1i.mem[0] = inst[39:32];
+        uut.l1i.mem[1] = inst[47:40];
+        uut.l1i.mem[2] = inst[55:48];
+        uut.l1i.mem[3] = inst[63:56];
+
+        $display("PROGRAM LOADED: %h\n\tL1I (1st instruction): %h%h%h%h", inst, uut.l1i.mem[0], uut.l1i.mem[1], uut.l1i.mem[2], uut.l1i.mem[3]);
+
+        #10;
+
+        uut.t0_enable = 1'b1;
+
+        $display("THREAD 0 ENABLE SIGNALS ASSERTED: %b", uut.t0_enable); 
+
+        #100;
+
+        $display("CORE RUNNING");
+        $display("T0 in_use = %b", uut.t0_in_use);
+        $display("T1 in_use = %b", uut.t1_in_use);
+
+        #200;
+
+        $display("T0.G0 = %h", uut.t0.rf.regs[1]);
+        $display("T0.G1 = %h", uut.t0.rf.regs[2]);
+
+        #200;
+
+        $display("L1I RD EN = %b ADDR = %h", uut.l1i_rd_en, uut.l1i_addr);
+        $display("L1D RD EN = %b ADDR = %h", uut.l1d_rd_en, uut.l1d_addr);
+
+        #200;
+
+        $display("SIMULATION COMPLETE");
         $finish;
+    end
+
+    initial begin
+        $dumpfile("obj/core_tb.vcd");
+        $dumpvars(0, tb_core);
     end
 
 endmodule

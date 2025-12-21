@@ -20,11 +20,11 @@ module regfile #(
     
     // Read Port 1
     input wire [REG_ADDR_W-1:0] rd1_addr,
-    output wire [DATA_W-1:0] rd1_out,
+    output reg [DATA_W-1:0] rd1_out,
     
     // Read Port 2
     input wire [REG_ADDR_W-1:0] rd2_addr,
-    output wire [DATA_W-1:0] rd2_out
+    output reg [DATA_W-1:0] rd2_out
 );
     // Storage
     reg [DATA_W-1:0] regs [0:NUM_REGS-1];
@@ -33,8 +33,8 @@ module regfile #(
     always @(posedge clk) begin
         if (rst) begin
             // Reset is enabled
-            regs[31] <= {DATA_W{1'b0}};
-            regs[32] <= {DATA_W{1'b0}};
+            for (integer i = 0; i < NUM_REGS; i = i + 1)
+                regs[i] <= {DATA_W{1'b0}};
             regs[33] <= {{(DATA_W-16){1'b0}}, 16'hFFFF}; 
         end else begin
             // Write is on
@@ -47,4 +47,5 @@ module regfile #(
     end
     
     assign rd1_out = (rd1_addr < NUM_REGS && (rd1_addr != 0)) ? regs[rd1_addr] : {DATA_W{1'b0}};
+    assign rd2_out = (rd2_addr < NUM_REGS && (rd2_addr != 0)) ? regs[rd2_addr] : {DATA_W{1'b0}};
 endmodule

@@ -1,282 +1,362 @@
 `timescale 1ns/1ps
 
-module core (
-   input wire clk,
-   input wire reset
+module core #(
+    parameter DATA_W = 64,
+    parameter ADDR_W = 64
+)(
+    input wire clk,
+    input wire rst,
+
+    // Core Control
+    input wire enable,
+    input wire core_reset,
+    output wire core_inuse,
+
+    // ring interface
+    output reg ring_req,
+    output reg [ADDR_W-1:0] ring_addr,
+    input wire ring_ready,
+    input wire [63:0] ring_rdata [8192:0]
 );
-    reg [31:0] pc;
-    reg [7:0] imem [0:1023]; // 1 KB of Instruction memory
+    localparam ST_IDLE = 4'd0;
+    localparam ST_REQ_L2 = 4'd1;
+    localparam ST_FILL = 4'd2;
+    localparam ST_DONE = 4'd3;
+    localparam ST_GRANT_L1I = 4'd4;
+    localparam ST_GRANT_L1D = 4'd5;
 
-    reg [31:0] fetched_inst;
-    reg fetched_valid;
-    reg [63:0] fetched_imm;
-    reg fetched_imm_valid;
+    localparam [31:0] L1_SIZE = 32'd65536;
 
-    wire [11:0] opcode_out;
-    wire [3:0] mode_out;
-    wire [5:0] rsrc_out, rdest_out;
-    wire [3:0] flags_out;
-    wire [63:0] imm_out;
-    reg imm_present;
-    reg alu_en;
-    wire [7:0] alu_op;
-    wire mem_rd;
-    wire mem_wr;
-    wire reg_wr;
-    wire decoded_valid;
+    reg [3:0] core_state;
+    reg [ADDR_W-1:0] refill_addr; // base address being refilled
+    reg [31:0] fill_index; // counts 0..65516
 
-    decoder dec(
-        .clk(clk),
-        .rst(reset),
-        .inst(fetched_inst),
-        .imm_in(fetched_imm),
-        .imm_in_en(fetched_imm_valid),
-        .opcode(opcode_out),
-        .mode(mode_out),
-        .rsrc(rsrc_out),
-        .rdest(rdest_out),
-        .flags(flags_out),
-        .imm(imm_out),
-        .imm_en(imm_present),
-        .alu_op(alu_op),
-        .alu_en(alu_en),
-        .mem_read(mem_rd),
-        .mem_write(mem_wr),
-        .reg_write(reg_wr),
-        .decoded_valid(decoded_valid)
-    );
+    // Thread control
+    reg t0_enable, t1_enable;
+    reg t0_reset, t1_reset;
 
-    wire [63:0] rsrc_data, rdest_data;
-    reg reg_we;
-    reg [5:0] rwr_addr;
-    reg [63:0] wr_data;
-    reg [5:0] rsrc_addr, rdest_addr;
+    wire t0_in_use, t1_in_use;
+    wire t0_locked, t1_locked;
 
-    regfile rf (
-        .clk(clk),
-        .rst(reset),
-        .wr_en(reg_we),
-        .wr1_addr(rwr_addr),
-        .wr1_data(wr_data),
-        .rd1_addr(rsrc_addr),
-        .rd1_out(rsrc_data),
-        .rd2_addr(rdest_addr),
-        .rd2_out(rdest_data)
-    );
-
+    // ALU
+    reg  alu_en;
+    reg [7:0] alu_op;
+    reg [DATA_W-1:0] alu_a, alu_b;
+    wire [DATA_W-1:0] alu_res;
+    wire alu_done;
     reg alu_valid;
-    reg [63:0] alu_a, alu_b;
-    wire [63:0] alu_res;
-    wire alu_zero, alu_carry, alu_overflow;
-    wire alu_eq, alu_lt, alu_gt;
+    wire alu_zero, alu_carry, alu_overflow, alu_lt, alu_eq, alu_gt;
 
-    reg alu_flags;
-
-    alu alu_mod(
+    alu alu_u (
         .clk(clk),
-        .rst(reset),
+        .rst(rst),
         .a(alu_a),
         .b(alu_b),
+        .op(alu_op),
         .res(alu_res),
+        .done(alu_done),
+        .valid(alu_valid),
         .zero(alu_zero),
         .carry(alu_carry),
         .overflow(alu_overflow),
-        .eq(alu_eq),
         .lt(alu_lt),
-        .gt(alu_gt),
-        .valid(alu_valid),
-        .op(alu_op)
+        .eq(alu_eq),
+        .gt(alu_gt)
     );
 
-    wire [63:0] dm_rd_data;
-    reg dm_rd_en, dm_wr_en;
-    reg [31:0] dm_addr;
-    reg [63:0] dm_wr_data;
-    mem #(.DEPTH(256)) dmem (
+    // L1 Caches
+    reg l1i_rd_en, l1d_rd_en;
+    reg l1i_wr_en, l1d_wr_en;
+    reg [ADDR_W-1:0] l1i_addr, l1d_addr;
+    wire [DATA_W-1:0] l1i_data, l1d_data;
+    reg [DATA_W-1:0] l1i_wr_data, l1d_wr_data;
+    reg [ADDR_W-1:0] l1i_baddr, l1d_baddr; // Base Address
+    reg l1i_wr_done, l1d_wr_done;
+    reg l1i_rd_done, l1d_rd_done;
+
+    mem #(.DEPTH(L1_SIZE), .DATA_W(DATA_W)) l1i (
         .clk(clk),
-        .rst(reset),
-        .rd_en(dm_rd_en),
-        .wr_en(dm_wr_en),
-        .byte_addr(dm_addr),
-        .wr_data(dm_wr_data),
-        .rd_data(dm_rd_data)
+        .rst(rst),
+        .rd_en(l1i_rd_en),
+        .wr_en(l1i_wr_en),
+        .addr(l1i_addr),
+        .wr_data(l1i_wr_data),
+        .rd_data(l1i_data),
+        
+        .rd_done(l1i_rd_done),
+        .wr_done(l1i_wr_done)
     );
 
-    localparam[63:0] FIXED_MEM_BASE = 64'h0000_0000_0000_1000;
-    
-    typedef enum logic [1:0] {S_FETCH=2'b00, S_WAIT_DEC=2'b01, S_EXEC=2'b10} state_t;
-    reg [1:0] state;
+    mem #(.DEPTH(L1_SIZE), .DATA_W(DATA_W)) l1d (
+        .clk(clk),
+        .rst(rst),
+        .rd_en(l1d_rd_en),
+        .wr_en(l1d_wr_en),
+        .addr(l1d_addr),
+        .wr_data(l1d_wr_data),
+        .rd_data(l1d_data),
 
-    reg [11:0] cur_opcode;
-    reg [3:0] cur_mode;
-    reg [5:0] cur_rsrc, cur_rdest;
-    reg [3:0] cur_flags;
-    reg [63:0] cur_imm;
-    reg cur_imm_present;
-    integer i;
+        .rd_done(l1d_rd_done),
+        .wr_done(l1d_wr_done)
+    );
 
-    initial begin
-        if (reset)
-            for(i=0;i<1024;i=i+1) imem[i] = 8'h00;
-    end
+    // Threads
+    wire t0_req_alu, t1_req_alu;
+    wire [7:0] t0_alu_op, t1_alu_op;
+    wire [DATA_W-1:0] t0_alu_a, t0_alu_b;
+    wire [DATA_W-1:0] t1_alu_a, t1_alu_b;
+    reg [DATA_W-1:0] t0_alu_res, t1_alu_res;
+    reg t0_alu_done, t1_alu_done;
+    wire t0_alu_valid, t1_alu_valid;
 
-    reg pending_imm_expected;
-    reg [31:0] fetch_inst_latched;
-    reg fetch_inst_valid_latched;
-    reg [63:0] fetch_imm_latched;
-    reg fetch_imm_valid_latched;
+    wire t0_req_l1i, t1_req_l1i;
+    wire [ADDR_W-1:0] t0_l1i_addr, t1_l1i_addr;
+
+    wire t0_req_l1d, t1_req_l1d;
+    wire [ADDR_W-1:0] t0_l1d_addr, t1_l1d_addr; 
+
+    reg t0_l1i_ready, t1_l1i_ready;
+    reg t0_l1d_ready, t1_l1d_ready;
+    reg [63:0] t0_l1i_data, t1_l1i_data;
+    reg [63:0] t0_l1d_data, t1_l1d_data;
+
+    // Thread connection
+
+    thread t0 (
+        .clk(clk),
+        .rst(rst),
+        .thread_reset(t0_reset),
+        .enable(t0_enable),
+        .in_use(t0_in_use),
+        .locked(t0_locked),
+
+        .alu_en(t0_req_alu),
+        .alu_op(t0_alu_op),
+        .alu_a(t0_alu_a),
+        .alu_b(t0_alu_b),
+        .alu_res(t0_alu_res),
+        .alu_done(t0_alu_done),
+        .alu_valid(t0_alu_valid),
+
+        .read_l1i(t0_req_l1i),
+        .l1i_addr(t0_l1i_addr),
+        .l1i_data(t0_l1i_data),
+        .l1i_ready(t0_l1i_ready),
+
+        .read_l1d(t0_req_l1d),
+        .l1d_addr(t0_l1d_addr),
+        .l1d_data(t0_l1d_data),
+        .l1d_ready(t0_l1d_ready)
+    );
+
+    thread t1 (
+        .clk(clk),
+        .rst(rst),
+        .thread_reset(t1_reset),
+        .enable(t1_enable),
+        .in_use(t1_in_use),
+        .locked(t1_locked),
+
+        .alu_en(t1_req_alu),
+        .alu_op(t1_alu_op),
+        .alu_a(t1_alu_a),
+        .alu_b(t1_alu_b),
+        .alu_res(t1_alu_res),
+        .alu_done(t1_alu_done),
+        .alu_valid(t1_alu_valid),
+
+        .read_l1i(t1_req_l1i),
+        .l1i_addr(t1_l1i_addr),
+        .l1i_data(t1_l1i_data),
+        .l1i_ready(t1_l1i_ready),
+
+        .read_l1d(t1_req_l1d),
+        .l1d_addr(t1_l1d_addr),
+        .l1d_data(t1_l1d_data),
+        .l1d_ready(t1_l1d_ready)
+    );
+
+    // round-robin
+    reg last_grant; // 0 = t0, 1 = t1
+
+    wire grant_t0_alu = t0_req_alu && (!t1_req_alu || last_grant);
+    wire grant_t1_alu = t1_req_alu && (!t0_req_alu || !last_grant);
+
+    reg grant_thread; // 0 = T0, 1 = T1
+
+    reg [1:0] alu_owner; // 0 = None, 1 = t0, 2 = t1
+    reg alu_busy;
 
     always @(posedge clk) begin
-        if (reset) begin
-            pc <= 32'h0;
-            fetched_valid <= 1'b0;
-            fetched_inst <= 31'b0;
-            fetched_imm_valid <= 1'b0;
-            pending_imm_expected <= 1'b0;
-            $display("Reset Completed!\n");
+        if (rst) begin
+            core_state <= ST_FILL;
+            ring_req <= 1;
+            ring_addr <= 0;
+            fill_index <= 0;
+            l1i_baddr <= 0;
+            grant_thread <= 0;
         end else begin
-            fetched_valid <= 1'b0;
-            fetched_imm_valid <= 1'b0;
-
-            if (!pending_imm_expected) begin
-                fetch_inst_latched[7:0] = imem[pc + 0];
-                fetch_inst_latched[15:8] = imem[pc + 1];
-                fetch_inst_latched[23:16] = imem[pc + 2];
-                fetch_inst_latched[31:24] = imem[pc + 3];
-
-                fetched_inst <= fetch_inst_latched;
-                fetched_valid <= 1'b1;
-
-                if (fetch_inst_latched[3]) begin
-                    pending_imm_expected <= 1'b1;
-                    pc <= pc + 4;
-                end else begin
-                    pc <= pc + 4;
+            case (core_state)
+                ST_IDLE: begin
+                    ring_req <= 0;
+                    l1i_wr_en <= 0;
+                    fill_index <= 0;
+                    if (t0_req_l1i && (t0_l1i_addr < l1i_baddr || t0_l1i_addr >= l1i_baddr+L1_SIZE)) begin
+                        refill_addr <= t0_l1i_addr;
+                        core_state <= ST_REQ_L2;
+                    end else if (t1_req_l1i && (t1_l1i_addr < l1i_baddr || t1_l1i_addr >= l1i_baddr+L1_SIZE)) begin
+                        refill_addr <= t1_l1i_addr;
+                        core_state <= ST_REQ_L2;
+                    end else if (t1_req_l1i) begin
+                        grant_thread <= 1;
+                        l1i_addr <= t1_l1i_addr;
+                        core_state <= ST_GRANT_L1I;
+                    end else if (t0_req_l1i) begin
+                        grant_thread <= 0;
+                        l1i_addr <= t0_l1i_addr;
+                        core_state <= ST_GRANT_L1I;
+                    end else if (t1_req_l1d) begin
+                        grant_thread <= 1;
+                        l1d_addr <= t1_l1d_addr;
+                        core_state <= ST_GRANT_L1D;
+                    end else if (t0_req_l1d) begin
+                        grant_thread <= 0;
+                        l1d_addr <= t0_l1d_addr;
+                        core_state <= ST_GRANT_L1D;
+                    end
                 end
-            end else begin
-                fetch_imm_latched[7:0] = imem[pc + 0];
-                fetch_imm_latched[15:8] = imem[pc + 1];
-                fetch_imm_latched[23:16] = imem[pc + 2];
-                fetch_imm_latched[31:24] = imem[pc + 3];
-                fetch_imm_latched[39:32] = imem[pc + 4];
-                fetch_imm_latched[47:40] = imem[pc + 5];
-                fetch_imm_latched[55:48] = imem[pc + 6];
-                fetch_imm_latched[63:56] = imem[pc + 7];
 
-                fetched_imm <= fetch_imm_latched;
-                fetched_imm_valid <= 1'b1;
-                pending_imm_expected <= 1'b0;
+                ST_GRANT_L1I: begin
+                    l1i_rd_en <= 1'b1;
+                    if (l1i_rd_done) begin
+                        if (grant_thread == 1'b0) begin
+                            t0_l1i_data <= l1i_data;
+                            t0_l1i_ready <= 1'b1;
+                        end else begin
+                            t1_l1i_data <= l1i_data;
+                            t1_l1i_ready <= 1'b1;
+                        end
+                        l1i_rd_en <= 1'b0;
+                        core_state <= ST_IDLE;
+                    end
+                end
 
-                pc <= pc + 8;
-            end
+                ST_GRANT_L1D: begin
+                    l1d_rd_en <= 1'b1;
+                    if (l1d_rd_done) begin
+                        if (grant_thread == 1'b0) begin
+                            t0_l1d_data <= l1d_data;
+                            t0_l1d_ready <= 1'b1;
+                        end else begin
+                            t1_l1d_data <= l1d_data;
+                            t1_l1d_ready <= 1'b1;
+                        end
+                        l1d_rd_en <= 1'b0;
+                        core_state <= ST_IDLE;
+                    end
+                end
+
+                ST_REQ_L2: begin
+                    ring_req <= 1;
+                    ring_addr <= refill_addr;
+                    if (ring_ready) begin
+                        core_state <= ST_FILL;
+                        fill_index <= 0;
+                    end
+                end
+
+                ST_FILL: begin
+                    if (ring_ready && ring_req || !ring_req) begin
+                        ring_req <= 0;
+                        l1i_wr_en <= 1;
+                        l1i_addr <= fill_index;
+
+                        l1i_wr_data <= ring_rdata[fill_index];
+                        fill_index <= fill_index + 8;
+                        if (fill_index >= L1_SIZE - 8) begin
+                            core_state <= ST_DONE;
+                            l1i_wr_en <= 0;
+                        end
+                    end
+                end
+
+                ST_DONE: begin
+                    l1i_baddr <= refill_addr;
+                    core_state <= ST_IDLE;
+                end
+            endcase
         end
     end
 
     always @(posedge clk) begin
-        if (reset) begin
-            state <= S_FETCH;
-            reg_we <= 1'b0;
-            dm_rd_en <= 0;
-            dm_wr_en <= 0;
-            alu_valid <= 0;
+        if (rst) begin
+            last_grant <= 1'b0;
+            t1_enable <= 1'b0;
+            t0_enable <= 1'b0;
+            alu_busy <= 1'b0;
+            t1_reset <= 1'b0;
+            t0_reset <= 1'b0;
+            alu_owner <= 2'b00;
+        end else if (core_reset) begin
+            last_grant <= 1'b0;
+            t1_enable <= 1'b0;
+            t0_enable <= 1'b0;
+            alu_busy <= 1'b0;
+            t1_reset <= 1'b1;
+            t0_reset <= 1'b1;
+            alu_owner <= 2'b0;
         end else begin
-            reg_we <= 1'b0;
-            dm_rd_en <= 1'b0;
-            dm_wr_en <= 1'b0;
-            alu_valid <= 1'b0;
-
-            case (state) 
-                S_FETCH: begin
-                    $display("Fetching....\n");
-                    if (decoded_valid) begin
-                        cur_opcode <= opcode_out;
-                        cur_mode <= mode_out;
-                        cur_rsrc <= rsrc_out;
-                        cur_rdest <= rdest_out;
-                        cur_flags <= flags_out;
-                        cur_imm <= imm_out;
-                        cur_imm_present <= imm_present;
-                        state <= S_EXEC;
-                        $display("Fetch Cycle Complete -\n\tOpcode: %h\n\tMode: %b\n\tRegisters: %d (src), %d (dest)\n\tImm: %h\n\tFlags: %b\n\tImm Present: %b\n", cur_opcode, cur_mode, cur_rsrc, cur_rdest, cur_imm, cur_flags, cur_imm_present);
+            t1_reset <= 1'b0;
+            t0_reset <= 1'b0;
+            if (enable) begin
+                if (!alu_busy) begin
+                    if (grant_t0_alu) begin
+                        last_grant <= 1'b0;
+                    end else if (grant_t1_alu) begin
+                        last_grant <= 1'b1;
                     end
-                end
+                end 
+            end
+        end
+    end
 
-                S_EXEC: begin
-                    // Default values each cycle
-                    $display("Executing...\n");
-                    reg_we   <= 1'b0;
-                    alu_valid <= 1'b0;
-                    dm_rd_en <= 1'b0;
-                    dm_wr_en <= 1'b0;
+    // Shared resource muxing
+    always @(*) begin
+        alu_en = 1'b0;
+        alu_op = 8'h00;
+        alu_a = {DATA_W{1'b0}};
+        alu_b = {DATA_W{1'b0}};
 
-                    // ALU opcode range
-                    if (cur_opcode < 12'h100) begin
-                        // Simple ALU ops (ADD, SUB, OR, AND...)
-                        rsrc_addr <= cur_rsrc;
-                        rdest_addr <= cur_rdest;
-
-                        alu_a <= rsrc_data;
-                        alu_b <= rdest_data;
-                        alu_valid <= 1'b1;
-
-                        reg_we   <= 1'b1;
-                        wr_data  <= alu_res;
-                        rwr_addr <= cur_rdest;
-
-                        state <= S_FETCH;
-
-                    end else begin
-                        case (cur_opcode)
-
-                            // -----------------------------
-                            // LOAD_FIXED  (opcode 0x100)
-                            // -----------------------------
-                            12'h100: begin
-                                if (cur_imm_present)
-                                    dm_addr <= cur_imm[31:0];
-                                else
-                                    dm_addr <= FIXED_MEM_BASE[31:0];
-
-                                dm_rd_en <= 1'b1;
-
-                                // write to destination register after read
-                                reg_we   <= 1'b1;
-                                rwr_addr <= cur_rdest;
-                                wr_data  <= dm_rd_data;
-
-                                $display("Exec Done!\n\tWr Addr: %h\n\tWr Data: %h\n", rwr_addr, wr_data);
-
-                                state <= S_FETCH;
-                            end
-
-                            // -----------------------------
-                            // STORE_FIXED  (opcode 0x101)
-                            // store rsrc → memory
-                            // -----------------------------
-                            12'h101: begin
-                                rsrc_addr <= cur_rsrc;
-
-                                if (cur_imm_present)
-                                    dm_addr <= cur_imm[31:0];
-                                else
-                                    dm_addr <= FIXED_MEM_BASE[31:0];
-
-                                dm_wr_en  <= 1'b1;
-                                dm_wr_data <= rsrc_data;
-
-                                state <= S_FETCH;
-                            end
-
-                            default: begin
-                                // Unknown opcode → just continue
-                                state <= S_FETCH;
-                            end
-                        endcase
-                    end
-                end
-
-                default: state <= S_FETCH;
-            endcase
+        if (!alu_busy) begin
+            if (grant_t0_alu) begin
+                alu_en = 1'b1;
+                alu_op = t0_alu_op;
+                alu_a = t0_alu_a;
+                alu_b = t0_alu_b;
+                alu_valid = t0_alu_valid;
+                alu_busy = 1'b1;
+                alu_owner = 2'b01;
+            end else if (grant_t1_alu) begin
+                alu_en = 1'b1;
+                alu_op = t1_alu_op;
+                alu_a = t1_alu_a;
+                alu_b = t1_alu_b;
+                alu_valid = t1_alu_valid;
+                alu_busy = 1'b1;
+                alu_owner = 2'b10;
+            end
+        end else begin
+            if (alu_owner == 2'b01 && alu_done) begin
+                t0_alu_done = alu_done;
+                t0_alu_res = alu_res;
+                alu_busy = 1'b0;
+                alu_owner = 2'b00;
+            end else if (alu_owner == 2'b10 && alu_done) begin
+                t1_alu_done = alu_done;
+                t1_alu_res = alu_res;
+                alu_busy = 1'b0;
+                alu_owner = 2'b00;
+            end
         end
     end
 endmodule
