@@ -5,6 +5,10 @@ module cpu (
     input wire rst
 );
     localparam [31:0] L3_SIZE = 32'd4194304; // 4 MB
+    localparam [31:0] L2_SIZE = 32'd65536;
+    localparam LINE_SIZE = 8;
+    localparam LINE_BYTES = LINE_SIZE * 8;
+    localparam NUM_LINES = L2_SIZE / LINE_BYTES;
 
     localparam [3:0] ST_IDLE = 4'd0;
     localparam [3:0] ST_GRANT = 4'd1;
@@ -37,7 +41,8 @@ module cpu (
     wire sc0_ring_req, sc1_ring_req;
     wire [63:0] sc0_ring_addr, sc1_ring_addr;
     reg sc0_ring_ready, sc1_ring_ready;
-    reg [63:0] sc0_ring_rdata, sc1_ring_rdata;
+    reg [63:0] sc0_ring_rdata [0:LINE_SIZE-1];
+    reg [63:0] sc1_ring_rdata [0:LINE_SIZE-1];
 
     supercore sc0 (
         .clk(clk),
@@ -60,6 +65,7 @@ module cpu (
     );
 
     reg grant_which_sc; // 0 = SC0, 1 = SC1
+    reg [31:0] lane;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -70,6 +76,7 @@ module cpu (
             l3_baddr <= 64'd0;
             cpu_state <= ST_IDLE;
             grant_which_sc <= 1'b0;
+            lane <= 0;
         end else begin
             case (cpu_state)
                 ST_IDLE: begin
@@ -90,13 +97,21 @@ module cpu (
                 ST_GRANT: begin
                     if (l3_rd_done) begin
                         l3_rd_en <= 1'b0;
-                        cpu_state <= ST_IDLE;
+
+                        if (lane >= LINE_SIZE) begin
+                            l3_rd_en <= 1'b0;
+                            cpu_state <= ST_IDLE;
+                            lane <= 0;
+                        end else begin
+                            l3_addr <= l3_addr + LINE_BYTES;
+                            lane <= lane + 1;
+                        end
 
                         if (grant_which_sc == 1'b0) begin
-                            sc0_ring_rdata <= l3_rd_data;
+                            sc0_ring_rdata[lane] <= l3_rd_data;
                             sc0_ring_ready <= 1'b1;
                         end else begin
-                            sc1_ring_rdata <= l3_rd_data;
+                            sc1_ring_rdata[lane] <= l3_rd_data;
                             sc1_ring_ready <= 1'b1;
                         end
                     end

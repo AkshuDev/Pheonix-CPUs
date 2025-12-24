@@ -17,7 +17,11 @@ module internal_state #(
 
     input wire wr_pl_en,
     input wire [3:0] wr_pl_data,
-    output reg [3:0] rd_pl_out
+    output reg [3:0] rd_pl_out,
+
+    input wire [DATA_W-1:0] pc_data,
+    input wire wr_pc,
+    output reg [DATA_W-1:0] pc_out
 );
     reg [DATA_W-1:0] regs [0:3];
     reg [3:0] pl;
@@ -32,8 +36,13 @@ module internal_state #(
         end else if (wr_en && wr1_addr != {DATA_W{1'b0}} && wr1_addr <= 64'd5) begin
             regs[wr1_addr] <= wr1_data;
         end
+
+        if (wr_pc) begin
+            regs[0] = pc_data;
+        end
     end
 
+    assign pc_out = regs[0];
     assign rd_pl_out = pl;
     assign rd1_out = (rd1_addr != {DATA_W{1'b0}} && rd1_addr < 64'd5) ? regs[rd1_addr] : {DATA_W{1'b0}};
     assign rd2_out = (rd2_addr != {DATA_W{1'b0}} && rd2_addr < 64'd5) ? regs[rd2_addr] : {DATA_W{1'b0}};

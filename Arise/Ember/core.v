@@ -16,20 +16,25 @@ module core #(
     output reg ring_req,
     output reg [ADDR_W-1:0] ring_addr,
     input wire ring_ready,
-    input wire [63:0] ring_rdata [8192:0]
+    input wire [63:0] ring_rdata [0:7]
 );
     localparam ST_IDLE = 4'd0;
-    localparam ST_REQ_L2 = 4'd1;
-    localparam ST_FILL = 4'd2;
-    localparam ST_DONE = 4'd3;
-    localparam ST_GRANT_L1I = 4'd4;
-    localparam ST_GRANT_L1D = 4'd5;
+    localparam ST_REQ_LINE = 4'd2;
+    localparam ST_FILL = 4'd3;
+    localparam ST_FILL_D = 4'd4;
+    localparam ST_REQ_LINE_D = 4'd5;
 
     localparam [31:0] L1_SIZE = 32'd65536;
+    localparam LINE_SIZE = 8;
+    localparam LINE_BYTES = LINE_SIZE * 8;
+    localparam NUM_LINES = L1_SIZE / LINE_BYTES;
 
     reg [3:0] core_state;
     reg [ADDR_W-1:0] refill_addr; // base address being refilled
     reg [31:0] fill_index; // counts 0..65516
+
+    reg [NUM_LINES-1:0] l1i_line_valid;
+    reg [NUM_LINES-1:0] l1d_line_valid;
 
     // Thread control
     reg t0_enable, t1_enable;
@@ -117,8 +122,8 @@ module core #(
 
     reg t0_l1i_ready, t1_l1i_ready;
     reg t0_l1d_ready, t1_l1d_ready;
-    reg [63:0] t0_l1i_data, t1_l1i_data;
-    reg [63:0] t0_l1d_data, t1_l1d_data;
+    reg [63:0] t0_l1i_data [0:7], t1_l1i_data [0:7];
+    reg [63:0] t0_l1d_data [0:7], t1_l1d_data [0:7];
 
     // Thread connection
 
@@ -187,102 +192,158 @@ module core #(
     reg [1:0] alu_owner; // 0 = None, 1 = t0, 2 = t1
     reg alu_busy;
 
+    reg [31:0] lane;
+
     always @(posedge clk) begin
         if (rst) begin
-            core_state <= ST_FILL;
-            ring_req <= 1;
+            core_state <= ST_IDLE;
+            ring_req <= 0;
             ring_addr <= 0;
             fill_index <= 0;
             l1i_baddr <= 0;
             grant_thread <= 0;
+            lane <= 0;
         end else begin
             case (core_state)
                 ST_IDLE: begin
                     ring_req <= 0;
                     l1i_wr_en <= 0;
                     fill_index <= 0;
-                    if (t0_req_l1i && (t0_l1i_addr < l1i_baddr || t0_l1i_addr >= l1i_baddr+L1_SIZE)) begin
+                    t0_l1i_ready <= 0;
+                    t1_l1i_ready <= 0;
+                    
+                    if (!l1i_line_valid[t0_l1i_addr / LINE_BYTES]) begin
                         refill_addr <= t0_l1i_addr;
-                        core_state <= ST_REQ_L2;
-                    end else if (t1_req_l1i && (t1_l1i_addr < l1i_baddr || t1_l1i_addr >= l1i_baddr+L1_SIZE)) begin
+                        fill_index <= 0;
+                        ring_req <= 1;
+                        ring_addr <= t0_l1i_addr;
+                        core_state <= ST_REQ_LINE;
+                    end else if (!l1i_line_valid[t1_l1i_addr / LINE_BYTES]) begin
                         refill_addr <= t1_l1i_addr;
-                        core_state <= ST_REQ_L2;
-                    end else if (t1_req_l1i) begin
-                        grant_thread <= 1;
-                        l1i_addr <= t1_l1i_addr;
-                        core_state <= ST_GRANT_L1I;
-                    end else if (t0_req_l1i) begin
-                        grant_thread <= 0;
+                        fill_index <= 0;
+                        ring_req <= 1;
+                        ring_addr <= t1_l1i_addr;
+                        core_state <= ST_REQ_LINE;
+                    end else if (l1i_line_valid[t0_l1i_addr / LINE_BYTES] && !t0_l1i_ready) begin
+                        grant_thread <= 1'b0;
+                        l1i_rd_en <= 1'b1;
                         l1i_addr <= t0_l1i_addr;
-                        core_state <= ST_GRANT_L1I;
-                    end else if (t1_req_l1d) begin
-                        grant_thread <= 1;
-                        l1d_addr <= t1_l1d_addr;
-                        core_state <= ST_GRANT_L1D;
-                    end else if (t0_req_l1d) begin
-                        grant_thread <= 0;
+                        core_state <= ST_REQ_LINE;
+                    end else if (l1i_line_valid[t1_l1i_addr / LINE_BYTES] && !t1_l1i_ready) begin
+                        grant_thread <= 1'b1;
+                        l1i_rd_en <= 1'b1;
+                        l1i_addr <= t1_l1i_addr;
+                        core_state <= ST_REQ_LINE;
+                    end
+
+                    if (!l1d_line_valid[t0_l1d_addr / LINE_BYTES]) begin
+                        refill_addr <= t0_l1d_addr;
+                        fill_index <= 0;
+                        ring_req <= 1;
+                        ring_addr <= t0_l1d_addr;
+                        core_state <= ST_REQ_LINE_D;
+                    end else if (!l1d_line_valid[t1_l1d_addr / LINE_BYTES]) begin
+                        refill_addr <= t1_l1d_addr;
+                        fill_index <= 0;
+                        ring_req <= 1;
+                        ring_addr <= t1_l1d_addr;
+                        core_state <= ST_REQ_LINE_D;
+                    end else if (l1d_line_valid[t0_l1d_addr / LINE_BYTES] && !t0_l1d_ready) begin
+                        grant_thread <= 1'b0;
+                        l1d_rd_en <= 1'b1;
                         l1d_addr <= t0_l1d_addr;
-                        core_state <= ST_GRANT_L1D;
+                        core_state <= ST_REQ_LINE_D;
+                    end else if (l1d_line_valid[t1_l1d_addr / LINE_BYTES] && !t1_l1d_ready) begin
+                        grant_thread <= 1'b1;
+                        l1d_rd_en <= 1'b1;
+                        l1d_addr <= t1_l1d_addr;
+                        core_state <= ST_REQ_LINE_D;
                     end
                 end
-
-                ST_GRANT_L1I: begin
-                    l1i_rd_en <= 1'b1;
-                    if (l1i_rd_done) begin
-                        if (grant_thread == 1'b0) begin
-                            t0_l1i_data <= l1i_data;
-                            t0_l1i_ready <= 1'b1;
-                        end else begin
-                            t1_l1i_data <= l1i_data;
-                            t1_l1i_ready <= 1'b1;
-                        end
-                        l1i_rd_en <= 1'b0;
-                        core_state <= ST_IDLE;
-                    end
-                end
-
-                ST_GRANT_L1D: begin
-                    l1d_rd_en <= 1'b1;
-                    if (l1d_rd_done) begin
-                        if (grant_thread == 1'b0) begin
-                            t0_l1d_data <= l1d_data;
-                            t0_l1d_ready <= 1'b1;
-                        end else begin
-                            t1_l1d_data <= l1d_data;
-                            t1_l1d_ready <= 1'b1;
-                        end
-                        l1d_rd_en <= 1'b0;
-                        core_state <= ST_IDLE;
-                    end
-                end
-
-                ST_REQ_L2: begin
-                    ring_req <= 1;
-                    ring_addr <= refill_addr;
-                    if (ring_ready) begin
+                ST_REQ_LINE: begin
+                    if (ring_ready && ring_req) begin
                         core_state <= ST_FILL;
                         fill_index <= 0;
+                    end else if (!ring_req) begin
+                        l1i_rd_en <= 1'b1;
+                        if (l1i_rd_done) begin
+                            if (lane < LINE_SIZE) begin
+                                case (grant_thread)
+                                    0: t0_l1i_data[lane] <= l1i_data;
+                                    1: t1_l1i_data[lane] <= l1i_data;
+                                endcase
+                                lane <= lane + 1;
+                                l1i_addr <= l1i_addr + LINE_BYTES;
+                            end else begin
+                                lane <= 0;
+                                l1i_rd_en <= 1'b0;
+                                case (grant_thread)
+                                    0: t0_l1i_ready <= 1'b1;
+                                    1: t1_l1i_ready <= 1'b1;
+                                endcase
+                                core_state <= ST_IDLE;
+                            end
+                        end
+                    end
+                end
+
+                ST_REQ_LINE_D: begin
+                    if (ring_ready && ring_req) begin
+                        core_state <= ST_FILL_D;
+                        fill_index <= 0;
+                    end else if (!ring_req) begin
+                        l1d_rd_en <= 1'b1;
+                        if (l1d_rd_done) begin
+                            if (lane < LINE_SIZE) begin
+                                case (grant_thread)
+                                    0: t0_l1d_data[lane] <= l1d_data;
+                                    1: t1_l1d_data[lane] <= l1d_data;
+                                endcase
+                                lane <= lane + 1;
+                                l1d_addr <= l1d_addr + LINE_BYTES;
+                            end else begin
+                                lane <= 0;
+                                l1d_rd_en <= 1'b0;
+                                case (grant_thread)
+                                    0: t0_l1d_ready <= 1'b1;
+                                    1: t1_l1d_ready <= 1'b1;
+                                endcase
+                                core_state <= ST_IDLE;
+                            end
+                        end
                     end
                 end
 
                 ST_FILL: begin
-                    if (ring_ready && ring_req || !ring_req) begin
-                        ring_req <= 0;
-                        l1i_wr_en <= 1;
-                        l1i_addr <= fill_index;
-
+                    if ((ring_req && ring_ready) || !ring_req) begin
+                        l1i_wr_en <= 1'b1;
+                        l1i_addr <= refill_addr + (fill_index * 8);
                         l1i_wr_data <= ring_rdata[fill_index];
-                        fill_index <= fill_index + 8;
-                        if (fill_index >= L1_SIZE - 8) begin
-                            core_state <= ST_DONE;
-                            l1i_wr_en <= 0;
+                        fill_index <= fill_index + 1;
+
+                        if (fill_index >= LINE_SIZE) begin
+                            l1i_wr_en <= 1'b0;
+                            l1i_line_valid[refill_addr / LINE_BYTES] <= 1'b1;
+                            ring_req <= 1'b0;
+                            core_state <= ST_IDLE;
                         end
                     end
                 end
 
-                ST_DONE: begin
-                    l1i_baddr <= refill_addr;
-                    core_state <= ST_IDLE;
+                ST_FILL_D: begin
+                    if ((ring_req && ring_ready) || !ring_req) begin
+                        l1d_wr_en <= 1'b1;
+                        l1d_addr <= refill_addr + (fill_index * 8);
+                        l1d_wr_data <= ring_rdata[fill_index];
+                        fill_index <= fill_index + 1;
+
+                        if (fill_index >= LINE_SIZE) begin
+                            l1d_wr_en <= 1'b0;
+                            l1d_line_valid[refill_addr / LINE_BYTES] <= 1'b1;
+                            ring_req <= 1'b0;
+                            core_state <= ST_IDLE;
+                        end
+                    end
                 end
             endcase
         end
@@ -292,7 +353,7 @@ module core #(
         if (rst) begin
             last_grant <= 1'b0;
             t1_enable <= 1'b0;
-            t0_enable <= 1'b0;
+            t0_enable <= 1'b1;
             alu_busy <= 1'b0;
             t1_reset <= 1'b0;
             t0_reset <= 1'b0;
@@ -358,6 +419,22 @@ module core #(
                 alu_owner = 2'b00;
             end
         end
+    end
+
+    always @(posedge clk) begin
+        if (rst) begin
+            t0_l1i_ready <= 0;
+            t1_l1i_ready <= 0;
+            for (integer i = 0; i < NUM_LINES; i = i + 1) begin 
+                l1i_line_valid[i] <= 1'b0;
+                l1d_line_valid[i] <= 1'b0;
+            end
+        end
+    end
+
+    initial begin
+        t0_enable = 1'b1;
+        t1_enable = 1'b0;
     end
 endmodule
 

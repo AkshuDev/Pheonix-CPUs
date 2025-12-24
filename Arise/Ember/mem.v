@@ -16,7 +16,7 @@ module mem #(
     output reg rd_done
 );
     localparam BYTES = DATA_W / 8;
-    (* ramstyle = "M9K" *) reg [7:0] mem [0:DEPTH-1];
+    (* ramstyle = "M9K" *) bit [7:0] mem [0:DEPTH-1];
     integer i;
 
     always @(posedge clk) begin

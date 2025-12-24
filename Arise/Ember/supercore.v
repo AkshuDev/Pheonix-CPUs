@@ -8,10 +8,13 @@ module supercore (
     output reg ring_req,
     output reg [63:0] ring_addr,
     input wire ring_ready,
-    input wire [63:0] ring_rdata [65536]
+    input wire [63:0] ring_rdata [0:7]
 );
     localparam [31:0] L2_SIZE = 32'd524288;
-    localparam [31:0] L1_SIZE = 32'd65536;
+    localparam [31:0] L1_SIZE = 32'd8192;
+    localparam LINE_SIZE = 8;
+    localparam LINE_BYTES = LINE_SIZE * 8;
+    localparam NUM_LINES = L2_SIZE / LINE_BYTES;
     // L2 (Total: 256KB)
     
     reg l2_rd_en;
@@ -40,17 +43,20 @@ module supercore (
     localparam [3:0] L2_IDLE = 4'd0;
     localparam [3:0] L2_GRANT = 4'd1;
     localparam [3:0] L2_FILL = 4'd2;
-    localparam [3:0] L2_DONE = 4'd3;
-    localparam [3:0] L2_DONEGRANT = 4'd4;
+
     reg [63:0] l2_refill_addr;
     reg [31:0] l2_fill_index; // 512 KB = 524288 bytes
     reg [63:0] l2_baddr;
+    reg [63:0] l2_line_valid [NUM_LINES];
 
     // Core wires
     wire [3:0] c_ring_req;
     wire [63:0] c_ring_addr [3:0];
     reg [3:0] c_ring_ready;
-    reg [63:0] c_ring_rdata [3:0] [0:L1_SIZE];
+    reg [63:0] c0_ring_rdata [0:LINE_SIZE-1];
+    reg [63:0] c1_ring_rdata [0:LINE_SIZE-1];
+    reg [63:0] c2_ring_rdata [0:LINE_SIZE-1];
+    reg [63:0] c3_ring_rdata [0:LINE_SIZE-1];
 
     wire [3:0] core_inuse;
     
@@ -60,80 +66,130 @@ module supercore (
 
     assign core_reset = {4{rst}};
 
-    genvar i;
-    generate
-        for (i = 0; i < 4; i=i+1) begin : cores
-            core #(.DATA_W(64), .ADDR_W(64)) c (
-                .clk(clk),
-                .rst(rst),
-                .enable(core_enable[i]),
-                .core_reset(core_reset[i]),
-                .core_inuse(core_inuse[i]),
-                .ring_req(c_ring_req[i]),
-                .ring_addr(c_ring_addr[i]),
-                .ring_ready(c_ring_ready[i]),
-                .ring_rdata(c_ring_rdata[i])
-            );
-        end
-    endgenerate
+    core #(.DATA_W(64), .ADDR_W(64)) c0 (
+        .clk(clk),
+        .rst(rst),
+        .enable(core_enable[0]),
+        .core_reset(core_reset[0]),
+        .core_inuse(core_inuse[0]),
+        .ring_req(c_ring_req[0]),
+        .ring_addr(c_ring_addr[0]),
+        .ring_ready(c_ring_ready[0]),
+        .ring_rdata(c0_ring_rdata)
+    );
+
+    core #(.DATA_W(64), .ADDR_W(64)) c1 (
+        .clk(clk),
+        .rst(rst),
+        .enable(core_enable[1]),
+        .core_reset(core_reset[1]),
+        .core_inuse(core_inuse[1]),
+        .ring_req(c_ring_req[1]),
+        .ring_addr(c_ring_addr[1]),
+        .ring_ready(c_ring_ready[1]),
+        .ring_rdata(c1_ring_rdata)
+    );
+
+
+    core #(.DATA_W(64), .ADDR_W(64)) c2 (
+        .clk(clk),
+        .rst(rst),
+        .enable(core_enable[2]),
+        .core_reset(core_reset[2]),
+        .core_inuse(core_inuse[2]),
+        .ring_req(c_ring_req[2]),
+        .ring_addr(c_ring_addr[2]),
+        .ring_ready(c_ring_ready[2]),
+        .ring_rdata(c2_ring_rdata)
+    );
+
+
+    core #(.DATA_W(64), .ADDR_W(64)) c3 (
+        .clk(clk),
+        .rst(rst),
+        .enable(core_enable[3]),
+        .core_reset(core_reset[3]),
+        .core_inuse(core_inuse[3]),
+        .ring_req(c_ring_req[3]),
+        .ring_addr(c_ring_addr[3]),
+        .ring_ready(c_ring_ready[3]),
+        .ring_rdata(c3_ring_rdata)
+    );
 
     integer j;
+    reg [2:0] coreidx;
     reg [31:0] k;
 
     always @(posedge clk) begin
         if (rst) begin
-            ring_req <= 1'b1;
+            ring_req <= 0;
             ring_addr <= 0;
-            l2_state <= L2_FILL; // Refill first
+            l2_state <= L2_IDLE;
             l2_wr_en <= 0;
             l2_fill_index <= 0;
             l2_refill_addr <= 0;
             k <= 0;
+            coreidx <= 0;
         end else begin
             case (l2_state)
                 L2_IDLE: begin
                     for (j = 0; j < 4; j = j + 1) begin
-                        if (c_ring_req[j]  && (c_ring_addr[j] > l2_baddr + L2_SIZE || c_ring_addr[j] < l2_baddr)) begin
+                        if (c_ring_req[j]  && !l2_line_valid[c_ring_addr[j] / LINE_BYTES]) begin
                             l2_refill_addr <= c_ring_addr[j];
                             ring_req <= 1'b1;
                             l2_state <= L2_FILL;
                             l2_fill_index <= 0;
-                        end else if (c_ring_req[j]) begin
+                            coreidx <= j;
+                        end else if (c_ring_req[j] && l2_line_valid[c_ring_addr[j] / LINE_BYTES]) begin
                             l2_addr <= c_ring_addr[j];
                             l2_rd_en <= 1'b1;
                             l2_state <= L2_GRANT;
+                            coreidx <= j;
                         end
                     end
                 end
                 L2_GRANT: begin
-                    if (l2_rd_done) begin
-                        c_ring_rdata[j][k] <= l2_data;
-                        k <= k + 8;
-                        l2_addr <= l2_addr + k;
-                        if (k >= L1_SIZE - 8)
-                            l2_state <= L2_DONEGRANT;
-                    end
-                end
-                L2_FILL: begin
-                    if (ring_ready && ring_req || !ring_req) begin
-                        ring_req <= 1'b0;
-                        l2_wr_en <= 1'b1;
-                        l2_addr <= l2_refill_addr;
-                        l2_wr_data <= ring_rdata[l2_fill_index];
-                        l2_fill_index <= l2_fill_index + 8;
-                        if (l2_fill_index >= L2_SIZE - 8) begin
-                            l2_state <= L2_DONE;
-                            l2_wr_en <= 0;
+                    if (ring_ready && ring_req) begin
+                        l2_state <= L2_FILL;
+                        l2_fill_index <= 0;
+                    end else if (!ring_req) begin
+                        l2_rd_en <= 1'b1;
+                        if (k <= LINE_SIZE-1 && l2_rd_done) begin
+                            l2_addr <= l2_addr + LINE_BYTES;
+                            k <= k + 1;
+                            case (coreidx)
+                                0:
+                                    c0_ring_rdata[k] <= l2_data;
+                                1:
+                                    c1_ring_rdata[k] <= l2_data;
+                                2:
+                                    c2_ring_rdata[k] <= l2_data;
+                                3:
+                                    c3_ring_rdata[k] <= l2_data;
+                            endcase
+                        end else if (k > LINE_SIZE-1) begin
+                            l2_rd_en <= 1'b0;
+                            c_ring_ready[coreidx] <= 1'b1;
+                            coreidx <= 0;
+                            l2_state <= L2_IDLE;
+                            k <= 0;
                         end
                     end
                 end
-                L2_DONE: begin
-                    l2_state <= L2_IDLE;
-                    l2_baddr <= l2_refill_addr;
-                end
-                L2_DONEGRANT: begin
-                    l2_rd_en <= 1'b0;
-                    l2_state <= L2_IDLE;
+                L2_FILL: begin
+                    if ((ring_ready && ring_req) || !ring_req) begin
+                        l2_wr_en <= 1'b1;
+                        l2_addr <= l2_refill_addr + (l2_fill_index * 8);
+                        l2_wr_data <= ring_rdata[l2_fill_index];
+                        l2_fill_index <= l2_fill_index + 1;
+
+                        if (l2_fill_index >= LINE_SIZE) begin
+                            l2_wr_en <= 1'b0;
+                            l2_line_valid[l2_refill_addr / LINE_BYTES] <= 1'b1;
+                            ring_req <= 1'b0;
+                            l2_state <= L2_IDLE;
+                        end
+                    end
                 end
             endcase
         end
@@ -141,16 +197,27 @@ module supercore (
 
     // Round-Robin
     always @(*) begin
-        // Default: no ready feedback
-        for (j = 0; j < 4; j=j+1) begin
-            c_ring_ready[j] = 0;
-            c_ring_rdata[j] = {64{1'b0}};
+        if (rst) begin
+            core_enable[0] = 1'b1;
+            core_enable[1] = 1'b0;
+            core_enable[2] = 1'b0;
+            core_enable[3] = 1'b0;
+            for (integer l = 0; l < LINE_SIZE/8; l = l + 1)
+                l2_line_valid[l] = 1'b0;
+        end else begin
+            // Default: no ready feedback
+            for (j = 0; j < 4; j=j+1) begin
+                c_ring_ready[j] = 0;
+            end
         end
     end
 
-    // Initially, cores are disabled
+    // Initially, cores are disabled EXCEPT core 0
     initial begin
-        core_enable = 4'b0000;
+        core_enable[0] = 1'b1;
+        core_enable[1] = 1'b0;
+        core_enable[2] = 1'b0;
+        core_enable[3] = 1'b0;
     end
 
 endmodule

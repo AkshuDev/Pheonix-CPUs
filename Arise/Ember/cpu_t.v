@@ -40,17 +40,10 @@ module tb_cpu;
 
         $display("PROGRAM LOADED: %h\n", inst);
 
-        #10;
+        #5000;
 
-        uut.sc0.c.enable = 1'b1;
-        uut.sc0.c.t0_enable = 1'b1;
-
-        $display("THREAD 0 ENABLE SIGNALS ASSERTED: %b", uut.t0_enable); 
-
-        #200;
-
-        $display("T0.G0 = %h", uut.sc0.c.t0.rf.regs[1]);
-        $display("T0.G1 = %h", uut.sc0.c.t0.rf.regs[2]);
+        $display("T0.G0 = %h", uut.sc0.c0.t0.rf.regs[1]);
+        $display("T0.G1 = %h", uut.sc0.c0.t0.rf.regs[2]);
 
         #200;
 
@@ -60,7 +53,7 @@ module tb_cpu;
 
     initial begin
         $dumpfile("obj/cpu_t.vcd");
-        $dumpvars(0, tb_core);
+        $dumpvars(0, tb_cpu);
     end
 
 endmodule
