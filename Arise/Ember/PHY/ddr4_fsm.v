@@ -1,12 +1,4 @@
-// DDR4 Block 1 - PHY Training FSM
-// Implementes coarse + fine delay sweep, window detection, centering, locking and retrying
-// NOTES:
-// Designed for hostile simulation
-// All PHY interactions are abstracted via read_ok and delay_tap
-// This module is intentionally CPU-agnostic
-
-timeunit 1ns;
-timeprecision 1ps;
+`timescale 1ns/1ps
 
 module ddr4_fsm #(
     parameter integer LANES = 16,
@@ -31,7 +23,7 @@ module ddr4_fsm #(
     input wire fine_failed,
     input wire [LANES-1:0] lane_valid,
     input wire [$clog2(DELAY_TAPS)-1:0] best_start [0:LANES-1],
-    input wire [$clog2(DELAY_TAPS)-1:0] best_end   [0:LANES-1],
+    input wire [$clog2(DELAY_TAPS)-1:0] best_end [0:LANES-1],
     input wire [$clog2(DELAY_TAPS+1)-1:0] best_width [0:LANES-1],
 
     output reg [$clog2(DELAY_TAPS)-1:0] delay_tap,
@@ -69,7 +61,10 @@ module ddr4_fsm #(
     reg [$clog2(DELAY_TAPS+1)-1:0] group_width;
 
     integer l;
-    integer valid_lane_count;
+    reg [$clog2(DELAY_TAPS)-1:0] valid_starts [0:LANES-1];
+    reg [$clog2(DELAY_TAPS)-1:0] valid_ends [0:LANES-1];
+    integer valid_num;
+    integer lane_failures;
 
     wire [$clog2(DELAY_TAPS)-1:0] center_tap;
     assign center_tap = group_start + (group_width >> 1);
@@ -92,7 +87,6 @@ module ddr4_fsm #(
             state <= next_state;
 
             case (state)
-
                 ST_IDLE: begin
                     training_done <= 0;
                     training_failed <= 0;
@@ -125,9 +119,14 @@ module ddr4_fsm #(
 
                 ST_VALIDATION: begin
                     val_count <= val_count + 1'b1;
-                    for (l=0;l<LANES;l=l+1)
+                    lane_failures = 0;
+                    for (l=0; l<LANES; l=l+1) begin
                         if (!read_ok[l])
-                            val_failures <= val_failures + 1'b1;
+                            lane_failures = lane_failures + 1;
+                    end
+
+                    if (lane_failures > 1)
+                        val_failures <= val_failures + 1'b1;
                 end
 
                 ST_RETRY: begin
@@ -199,25 +198,75 @@ module ddr4_fsm #(
         endcase
     end
 
-    always @(*) begin
-        group_start = 0;
-        group_end = DELAY_TAPS-1;
-        valid_lane_count = 0;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            group_start <= 0;
+            group_end <= 0;
+            group_width <= 0;
+        end else begin
+            if (fine_done) begin
+                group_start <= 0;
+                group_width <= 0;
+                group_end <= 0;
 
-        for (l=0;l<LANES;l=l+1) begin
-            if (lane_valid[l] && best_width[l] >= MIN_GROUP_WIDTH) begin
-                valid_lane_count = valid_lane_count + 1;
-                if (best_start[l] > group_start)
-                    group_start = best_start[l];
-                if (best_end[l] < group_end)
-                    group_end = best_end[l];
+                valid_num = 0;
+                for (l=0;l<LANES;l=l+1) begin
+                    if (lane_valid[l]) begin
+                        valid_starts[valid_num] = best_start[l];
+                        valid_ends[valid_num] = best_end[l];
+                        valid_num = valid_num + 1;
+                    end
+                end
+
+                if (valid_num >= MIN_LANES_REQUIRED) begin
+                    // Get median of valid start and ends using bubble sort
+                    reg [$clog2(DELAY_TAPS)-1:0] sorted[0:LANES-1];
+                    integer mid;
+                    integer i,j;
+                    reg [$clog2(DELAY_TAPS)-1:0] temp;
+                
+                    // Group Start
+                    for (i=0;i<valid_num;i=i+1)
+                        sorted[i] = valid_starts[i];
+
+                    for (i=0;i<valid_num-1;i=i+1)
+                        for (j=0;j<valid_num-i-1;j=j+1)
+                            if (sorted[j] > sorted[j+1]) begin
+                                temp = sorted[j];
+                                sorted[j] = sorted[j+1];
+                                sorted[j+1] = temp;
+                            end
+
+                    mid = valid_num / 2;
+                    if (valid_num % 2 == 1)
+                        group_start <= sorted[mid];
+                    else
+                        group_start <= (sorted[mid-1] + sorted[mid]) >> 1;
+
+                    // Group End
+                    for (i=0;i<valid_num;i=i+1)
+                        sorted[i] = valid_ends[i];
+
+                    for (i=0;i<valid_num-1;i=i+1)
+                        for (j=0;j<valid_num-i-1;j=j+1)
+                            if (sorted[j] > sorted[j+1]) begin
+                                temp = sorted[j];
+                                sorted[j] = sorted[j+1];
+                                sorted[j+1] = temp;
+                            end
+
+                    mid = valid_num / 2;
+                    if (valid_num % 2 == 1)
+                        group_end <= sorted[mid];
+                    else
+                        group_end <= (sorted[mid-1] + sorted[mid]) >> 1;
+
+                    group_width <= group_end - group_start + 1;
+                end
+
+                $display("Group W, S, E: 0x%h 0x%h 0x%h", group_width, group_start, group_end);
             end
         end
-
-        if (valid_lane_count < MIN_LANES_REQUIRED)
-            group_width = 0;
-        else
-            group_width = (group_end >= group_start) ? group_end - group_start + 1 : 0;
     end
 
 endmodule

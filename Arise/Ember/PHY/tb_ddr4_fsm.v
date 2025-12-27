@@ -1,26 +1,20 @@
 `timescale 1ns/1ps
 
 module tb_ddr4_fsm;
-
     localparam LANES = 16;
     localparam DELAY_TAPS = 64;
     localparam COARSE_STEPS = 8;
 
     reg clk;
     reg rst_n;
-
-    initial clk = 0;
-    always #5 clk = ~clk;
-
     reg start_training;
     reg [LANES-1:0] read_ok;
     reg drift_detected;
-
     reg fine_done;
     reg fine_failed;
     reg [LANES-1:0] lane_valid;
     reg [$clog2(DELAY_TAPS)-1:0] best_start [0:LANES-1];
-    reg [$clog2(DELAY_TAPS)-1:0] best_end   [0:LANES-1];
+    reg [$clog2(DELAY_TAPS)-1:0] best_end [0:LANES-1];
     reg [$clog2(DELAY_TAPS+1)-1:0] best_width [0:LANES-1];
 
     wire [$clog2(DELAY_TAPS)-1:0] delay_tap;
@@ -33,11 +27,14 @@ module tb_ddr4_fsm;
     wire [$clog2(DELAY_TAPS)-1:0] final_delay_tap;
 
     integer l;
-    integer i;
+    integer step;
 
-    // TRUE windows (coarse-dependent)
+    // Realistic windows
     integer true_start [0:LANES-1];
-    integer true_end   [0:LANES-1];
+    integer true_end [0:LANES-1];
+
+    initial clk = 0;
+    always #5 clk = ~clk;
 
     ddr4_fsm dut (
         .clk(clk),
@@ -61,16 +58,49 @@ module tb_ddr4_fsm;
         .final_delay_tap(final_delay_tap)
     );
 
+    // Initialize true_start/true_end after reset
+    task init_windows;
+        integer l, base;
+        begin
+            for (l=0;l<LANES;l=l+1) begin
+                base = (DELAY_TAPS/COARSE_STEPS) * coarse_sel;
+                true_start[l] = base + $urandom_range(2, 6);
+                true_end[l] = true_start[l] + $urandom_range(10, 18);
+                if (true_end[l] >= DELAY_TAPS) true_end[l] = DELAY_TAPS-1;
+
+                $display("Lane %0d: true_start=0x%0h true_end=0x%0h", l, true_start[l], true_end[l]);
+            end
+            $display("Windows initialized!");
+        end
+    endtask
+
+    // Smooth yet harsh drift
+    task drift_windows;
+        integer l, step;
+        begin
+            for (l=0;l<LANES;l=l+1) begin
+                // small random drift up or down
+                step = $urandom_range(-2,2);
+                true_start[l] = true_start[l] + step;
+                true_end[l] = true_end[l] + step;
+
+                // clamp to valid range
+                if (true_start[l] < 1) true_start[l] = 1;
+                if (true_end[l] >= DELAY_TAPS) true_end[l] = DELAY_TAPS-1;
+                if (true_end[l] - true_start[l] < 6)
+                    true_end[l] = true_start[l] + 6; // minimum width
+            end
+        end
+    endtask
+
     // READ_OK MODEL
     always @(posedge clk) begin
         for (l=0;l<LANES;l=l+1) begin
-            if (delay_tap >= true_start[l] && delay_tap <= true_end[l]) begin
-                read_ok[l] <= ($urandom_range(0,99) < 95);
-                $display("[%0t] LANE [%0d] Read Ok [%0d]", $time, l, read_ok[l]);
-            end else begin
-                read_ok[l] <= ($urandom_range(0,99) < 5);
-                $display("[%0t] LANE [%0d] Read Ok [%0d]", $time, l, read_ok[l]);
-            end
+            // high chance ok inside window, low outside
+            if (delay_tap >= true_start[l] && delay_tap <= true_end[l])
+                read_ok[l] <= ($urandom_range(0,99) < 90); // 90% chance to pass
+            else
+                read_ok[l] <= ($urandom_range(0,99) < 10); // 10% chance false pass
         end
     end
 
@@ -80,6 +110,7 @@ module tb_ddr4_fsm;
             fine_done <= 0;
             fine_failed <= 0;
         end else if (fine_start) begin
+            drift_windows();
             fine_done <= 0;
             fine_failed <= 0;
 
@@ -94,30 +125,11 @@ module tb_ddr4_fsm;
                     best_width[l] <= 0;
                 end
             end
-
-            #200;
             fine_done <= 1;
         end else begin
             fine_done <= 0;
             fine_failed <= 0;
         end
-    end
-
-    // COARSE WINDOW GENERATOR
-    task regenerate_windows;
-        integer base;
-        begin
-            for (l=0;l<LANES;l=l+1) begin
-                base = coarse_sel * (DELAY_TAPS/COARSE_STEPS);
-                true_start[l] = base + $urandom_range(2,6);
-                true_end[l] = true_start[l] + $urandom_range(10,20);
-            end
-        end
-    endtask
-
-    always @(posedge clk) begin
-        if (fine_start)
-            regenerate_windows();
     end
 
     initial begin
@@ -133,12 +145,16 @@ module tb_ddr4_fsm;
         for (l=0;l<LANES;l=l+1) begin
             lane_valid[l] = 0;
             best_width[l] = 0;
+            true_start[l] = 0;
+            true_end[l] = 0;
         end
 
         #50;
         rst_n = 1;
 
-        #50;
+        init_windows();
+
+        #10;
         start_training = 1;
         #10;
         start_training = 0;
@@ -157,3 +173,4 @@ module tb_ddr4_fsm;
     end
 
 endmodule
+
