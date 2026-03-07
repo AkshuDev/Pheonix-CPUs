@@ -125,6 +125,11 @@ module core #(
     reg [63:0] t0_l1i_data [0:7], t1_l1i_data [0:7];
     reg [63:0] t0_l1d_data [0:7], t1_l1d_data [0:7];
 
+    wire [9:0] t0_l1i_idx = t0_l1i_addr[15:6];
+    wire [9:0] t1_l1i_idx = t1_l1i_addr[15:6];
+    wire [9:0] t0_l1d_idx = t0_l1d_addr[15:6];
+    wire [9:0] t1_l1d_idx = t1_l1d_addr[15:6];
+
     // Thread connection
 
     thread t0 (
@@ -212,48 +217,48 @@ module core #(
                     t0_l1i_ready <= 0;
                     t1_l1i_ready <= 0;
                     
-                    if (!l1i_line_valid[t0_l1i_addr / LINE_BYTES]) begin
+                    if (!l1i_line_valid[t0_l1i_idx]) begin
                         refill_addr <= t0_l1i_addr;
                         fill_index <= 0;
                         ring_req <= 1;
                         ring_addr <= t0_l1i_addr;
                         core_state <= ST_REQ_LINE;
-                    end else if (!l1i_line_valid[t1_l1i_addr / LINE_BYTES]) begin
+                    end else if (!l1i_line_valid[t1_l1i_idx]) begin
                         refill_addr <= t1_l1i_addr;
                         fill_index <= 0;
                         ring_req <= 1;
                         ring_addr <= t1_l1i_addr;
                         core_state <= ST_REQ_LINE;
-                    end else if (l1i_line_valid[t0_l1i_addr / LINE_BYTES] && !t0_l1i_ready) begin
+                    end else if (l1i_line_valid[t0_l1i_idx] && !t0_l1i_ready) begin
                         grant_thread <= 1'b0;
                         l1i_rd_en <= 1'b1;
                         l1i_addr <= t0_l1i_addr;
                         core_state <= ST_REQ_LINE;
-                    end else if (l1i_line_valid[t1_l1i_addr / LINE_BYTES] && !t1_l1i_ready) begin
+                    end else if (l1i_line_valid[t1_l1i_idx] && !t1_l1i_ready) begin
                         grant_thread <= 1'b1;
                         l1i_rd_en <= 1'b1;
                         l1i_addr <= t1_l1i_addr;
                         core_state <= ST_REQ_LINE;
                     end
 
-                    if (!l1d_line_valid[t0_l1d_addr / LINE_BYTES]) begin
+                    if (!l1d_line_valid[t0_l1d_idx]) begin
                         refill_addr <= t0_l1d_addr;
                         fill_index <= 0;
                         ring_req <= 1;
                         ring_addr <= t0_l1d_addr;
                         core_state <= ST_REQ_LINE_D;
-                    end else if (!l1d_line_valid[t1_l1d_addr / LINE_BYTES]) begin
+                    end else if (!l1d_line_valid[t1_l1d_idx]) begin
                         refill_addr <= t1_l1d_addr;
                         fill_index <= 0;
                         ring_req <= 1;
                         ring_addr <= t1_l1d_addr;
                         core_state <= ST_REQ_LINE_D;
-                    end else if (l1d_line_valid[t0_l1d_addr / LINE_BYTES] && !t0_l1d_ready) begin
+                    end else if (l1d_line_valid[t0_l1d_idx] && !t0_l1d_ready) begin
                         grant_thread <= 1'b0;
                         l1d_rd_en <= 1'b1;
                         l1d_addr <= t0_l1d_addr;
                         core_state <= ST_REQ_LINE_D;
-                    end else if (l1d_line_valid[t1_l1d_addr / LINE_BYTES] && !t1_l1d_ready) begin
+                    end else if (l1d_line_valid[t1_l1d_idx] && !t1_l1d_ready) begin
                         grant_thread <= 1'b1;
                         l1d_rd_en <= 1'b1;
                         l1d_addr <= t1_l1d_addr;

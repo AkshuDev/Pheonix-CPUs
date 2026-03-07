@@ -324,8 +324,10 @@ module thread #(
                 end
 
                 ST_VERIFY: begin
-                    if (!verify_ok)
+                    if (!verify_ok) begin
                         locked <= 1'b1;
+                        $display("Verify failed for data: %h\n", inst);
+                    end
                 end
 
                 ST_EXECUTE: begin

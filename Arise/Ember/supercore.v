@@ -130,22 +130,31 @@ module supercore (
             l2_refill_addr <= 0;
             k <= 0;
             coreidx <= 0;
+            for (integer l = 0; l < NUM_LINES; l = l + 1)
+                l2_line_valid[l] <= 1'b0;
         end else begin
             case (l2_state)
                 L2_IDLE: begin
-                    for (j = 0; j < 4; j = j + 1) begin
-                        if (c_ring_req[j]  && !l2_line_valid[c_ring_addr[j] / LINE_BYTES]) begin
-                            l2_refill_addr <= c_ring_addr[j];
-                            ring_req <= 1'b1;
-                            l2_state <= L2_FILL;
-                            l2_fill_index <= 0;
-                            coreidx <= j;
-                        end else if (c_ring_req[j] && l2_line_valid[c_ring_addr[j] / LINE_BYTES]) begin
-                            l2_addr <= c_ring_addr[j];
-                            l2_rd_en <= 1'b1;
-                            l2_state <= L2_GRANT;
-                            coreidx <= j;
-                        end
+                    if (c_ring_req[0]) begin
+                        l2_refill_addr <= c_ring_addr[0];
+                        coreidx <= 0;
+                        l2_state <= l2_line_valid[(c_ring_addr[0][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
+                        if (!l2_line_valid[(c_ring_addr[0][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
+                    end else if (c_ring_req[1]) begin
+                        l2_refill_addr <= c_ring_addr[1];
+                        coreidx <= 1;
+                        l2_state <= l2_line_valid[(c_ring_addr[1][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
+                        if (!l2_line_valid[(c_ring_addr[1][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
+                    end else if (c_ring_req[2]) begin
+                        l2_refill_addr <= c_ring_addr[2];
+                        coreidx <= 2;
+                        l2_state <= l2_line_valid[(c_ring_addr[2][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
+                        if (!l2_line_valid[(c_ring_addr[2][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
+                    end else if (c_ring_req[3]) begin
+                        l2_refill_addr <= c_ring_addr[3];
+                        coreidx <= 3;
+                        l2_state <= l2_line_valid[(c_ring_addr[3][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
+                        if (!l2_line_valid[(c_ring_addr[3][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
                     end
                 end
                 L2_GRANT: begin
@@ -202,8 +211,6 @@ module supercore (
             core_enable[1] = 1'b0;
             core_enable[2] = 1'b0;
             core_enable[3] = 1'b0;
-            for (integer l = 0; l < LINE_SIZE/8; l = l + 1)
-                l2_line_valid[l] = 1'b0;
         end else begin
             // Default: no ready feedback
             for (j = 0; j < 4; j=j+1) begin
@@ -221,4 +228,3 @@ module supercore (
     end
 
 endmodule
-
