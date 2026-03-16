@@ -1,118 +1,125 @@
-`timescale 1ns/1ps;
+`timescale 1ns/1ps
 
 module cpu (
     input wire clk,
     input wire rst
 );
     localparam [31:0] L3_SIZE = 32'd4194304; // 4 MB
-    localparam [31:0] L2_SIZE = 32'd65536;
     localparam LINE_SIZE = 8;
     localparam LINE_BYTES = LINE_SIZE * 8;
-    localparam NUM_LINES = L2_SIZE / LINE_BYTES;
 
-    localparam [3:0] ST_IDLE = 4'd0;
-    localparam [3:0] ST_GRANT = 4'd1;
-    localparam [3:0] ST_FILL = 4'd2;
-    localparam [3:0] ST_DONE = 4'd3;
-
-    reg [3:0] cpu_state;
-
+    // L3 memory interface
     reg l3_rd_en, l3_wr_en;
     reg [63:0] l3_addr;
     reg [63:0] l3_wr_data;
-    wire [63:0] l3_rd_data;
-    wire l3_wr_done, l3_rd_done;
-    reg [63:0] l3_baddr;
+    wire [63:0] l3_rdata;
+    wire l3_ready;
 
     mem #(.DEPTH(L3_SIZE), .DATA_W(64)) l3 (
         .clk(clk),
         .rst(rst),
-
-        .wr_en(l3_wr_en),
         .rd_en(l3_rd_en),
+        .wr_en(l3_wr_en),
         .addr(l3_addr),
-
         .wr_data(l3_wr_data),
-        .wr_done(l3_wr_done),
-        .rd_data(l3_rd_data),
-        .rd_done(l3_rd_done)
+        .rd_data(l3_rdata),
+        .rd_done(l3_ready),
+        .wr_done() // unused for now
     );
 
-    wire sc0_ring_req, sc1_ring_req;
-    wire [63:0] sc0_ring_addr, sc1_ring_addr;
-    reg sc0_ring_ready, sc1_ring_ready;
-    reg [63:0] sc0_ring_rdata [0:LINE_SIZE-1];
-    reg [63:0] sc1_ring_rdata [0:LINE_SIZE-1];
+    // Supercores
+    wire sc0_req, sc1_req;
+    wire [63:0] sc0_addr, sc1_addr;
+    wire [63:0] sc0_wdata, sc1_wdata;
+    wire sc0_wr, sc1_wr;
+    reg [63:0] sc0_rdata, sc1_rdata;
+    reg sc0_ready, sc1_ready;
 
     supercore sc0 (
         .clk(clk),
         .rst(rst),
-
-        .ring_req(sc0_ring_req),
-        .ring_addr(sc0_ring_addr),
-        .ring_ready(sc0_ring_ready),
-        .ring_rdata(sc0_ring_rdata)
+        .mem_req(sc0_req),
+        .mem_addr(sc0_addr),
+        .mem_wdata(sc0_wdata),
+        .mem_wr(sc0_wr),
+        .mem_rdata(sc0_rdata),
+        .mem_ready(sc0_ready)
     );
 
     supercore sc1 (
         .clk(clk),
         .rst(rst),
-
-        .ring_req(sc1_ring_req),
-        .ring_addr(sc1_ring_addr),
-        .ring_ready(sc1_ring_ready),
-        .ring_rdata(sc1_ring_rdata)
+        .mem_req(),
+        .mem_addr(),
+        .mem_wdata(),
+        .mem_wr(),
+        .mem_rdata(sc1_rdata),
+        .mem_ready(sc1_ready)
     );
 
+    // CPU FSM
+    localparam ST_IDLE  = 2'd0;
+    localparam ST_GRANT = 2'd1;
+    localparam ST_FILL  = 2'd2;
+
+    reg [1:0] cpu_state;
     reg grant_which_sc; // 0 = SC0, 1 = SC1
-    reg [31:0] lane;
+    reg [3:0] lane;
+    reg [63:0] current_addr;
 
     always @(posedge clk) begin
         if (rst) begin
-            l3_rd_en <= 1'b0;
-            l3_wr_en <= 1'b0;
-            l3_addr <= 64'd0;
-            l3_wr_data <= 64'd0;
-            l3_baddr <= 64'd0;
             cpu_state <= ST_IDLE;
-            grant_which_sc <= 1'b0;
             lane <= 0;
+            grant_which_sc <= 0;
+            l3_rd_en <= 0;
+            l3_wr_en <= 0;
+            l3_addr <= 0;
         end else begin
             case (cpu_state)
                 ST_IDLE: begin
-                    if (sc0_ring_req && (sc0_ring_addr > l3_baddr + L3_SIZE || sc0_ring_addr < l3_baddr)) begin
-                    end else if (sc1_ring_req && (sc1_ring_addr > l3_baddr + L3_SIZE || sc1_ring_addr < l3_baddr)) begin
-                    end else if (sc0_ring_req) begin
+                    l3_rd_en <= 0;
+                    sc0_ready <= 0;
+                    sc1_ready <= 0;
+
+                    // Check which supercore requests memory
+                    if (sc0_req) begin
+                        grant_which_sc <= 0;
+                        current_addr <= sc0_addr;
+                        l3_rd_en <= 1;
+                        l3_addr <= sc0_addr;
+                        lane <= 0;
                         cpu_state <= ST_GRANT;
-                        l3_rd_en <= 1'b1;
-                        l3_addr <= sc0_ring_addr;
-                        grant_which_sc <= 1'b0;
-                    end else if (sc1_ring_req) begin
+                    end else if (sc1_req) begin
+                        grant_which_sc <= 1;
+                        current_addr <= sc1_addr;
+                        l3_rd_en <= 1;
+                        l3_addr <= sc1_addr;
+                        lane <= 0;
                         cpu_state <= ST_GRANT;
-                        l3_rd_en <= 1'b1;
-                        l3_addr <= sc1_ring_addr;
-                        grant_which_sc <= 1'b1;
                     end
                 end
-                ST_GRANT: begin
-                    if (l3_rd_done) begin
-                        l3_rd_en <= 1'b0;
 
-                        if (lane >= LINE_SIZE) begin
-                            l3_rd_en <= 1'b0;
-                            cpu_state <= ST_IDLE;
-                            lane <= 0;
+                ST_GRANT: begin
+                    if (l3_ready) begin
+                        // Transfer data to correct supercore
+                        if (grant_which_sc == 0) begin
+                            sc0_rdata <= l3_rdata;
+                            sc0_ready <= 1'b1;
+                            $display("Granting %h (CPU)", l3_rdata);
                         end else begin
-                            l3_addr <= l3_addr + LINE_BYTES;
-                            lane <= lane + 1;
+                            sc1_rdata <= l3_rdata;
+                            sc1_ready <= 1'b1;
                         end
 
-                        if (grant_which_sc == 1'b0) begin
-                            sc0_ring_rdata[lane] <= l3_rd_data;
-                            sc0_ring_ready <= 1'b1;
-                        end else begin
-                            sc1_ring_rdata[lane] <= l3_rd_data;
-                            sc1_ring_ready <= 1'b1;
+                        lane <= lane + 1;
+                        l3_addr <= l3_addr + LINE_BYTES;
+
+                        // Stop after full line
+                        if (lane >= LINE_SIZE-1) begin
+                            cpu_state <= ST_IDLE;
+                            lane <= 0;
+                            l3_rd_en <= 0;
                         end
                     end
                 end

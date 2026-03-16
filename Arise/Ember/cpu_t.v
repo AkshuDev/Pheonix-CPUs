@@ -1,59 +1,48 @@
 `timescale 1ns/1ps
 
 module tb_cpu;
-
     reg clk;
     reg rst;
-
-    reg [63:0] inst; // 2 instruction
 
     cpu uut (
         .clk(clk),
         .rst(rst)
     );
 
+    // Clock generation
     initial begin
         clk = 0;
         forever #5 clk = ~clk;
     end
 
+    // Program load and reset
     initial begin
-        inst = {12'h115, 4'h2, 6'h08, 6'h01, 4'h1, 12'h001, 4'h1, 6'h01, 6'h02, 4'h1};
-        uut.l3.mem[4] = inst[7:0];
-        uut.l3.mem[5] = inst[15:8];
-        uut.l3.mem[6] = inst[23:16];
-        uut.l3.mem[7] = inst[31:24];
-        uut.l3.mem[0] = inst[39:32];
-        uut.l3.mem[1] = inst[47:40];
-        uut.l3.mem[2] = inst[55:48];
-        uut.l3.mem[3] = inst[63:56];
         rst = 1'b1;
-
-        #50;
+        #20;
         rst = 1'b0;
 
-        $display("RESET DEASSERTED");
+        // Load a test instruction into L3 memory
+        // MOV G1, #1 ; MOV G2, #2
+        uut.l3.mem[0] = 8'h15; // least significant byte first
+        uut.l3.mem[1] = 8'h01;
+        uut.l3.mem[2] = 8'h02;
+        uut.l3.mem[3] = 8'h00;
+        uut.l3.mem[4] = 8'h15;
+        uut.l3.mem[5] = 8'h03;
+        uut.l3.mem[6] = 8'h04;
+        uut.l3.mem[7] = 8'h00;
 
-        @(posedge clk);
+        $display("RESET DEASSERTED, PROGRAM LOADED");
 
-        #10;
-
-        $display("PROGRAM LOADED: %h\n", inst);
-
-        #5000;
-
-        $display("T0.G0 = %h", uut.sc0.c0.t0.rf.regs[1]);
-        $display("T0.G1 = %h", uut.sc0.c0.t0.rf.regs[2]);
-
-        #200;
+        #5000; // Run for sufficient cycles
 
         $display("SIMULATION COMPLETE");
         $finish;
     end
 
+    // VCD waveform dump
     initial begin
         $dumpfile("obj/cpu_t.vcd");
         $dumpvars(0, tb_cpu);
     end
-
 endmodule

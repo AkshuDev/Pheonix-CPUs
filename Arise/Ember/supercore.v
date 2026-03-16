@@ -1,230 +1,169 @@
 `timescale 1ns/1ps
 
-module supercore (
+module supercore #(
+    parameter DATA_W = 64,
+    parameter ADDR_W = 64,
+    parameter NUM_CORES = 4,
+    parameter LINE_SIZE = 8,
+    parameter L2_SIZE = 512*1024
+) (
     input wire clk,
     input wire rst,
 
-    // Ring Interface
-    output reg ring_req,
-    output reg [63:0] ring_addr,
-    input wire ring_ready,
-    input wire [63:0] ring_rdata [0:7]
+    // Memory inerface
+    output wire mem_req,
+    output wire [DATA_W-1:0] mem_addr,
+    output wire [DATA_W-1:0] mem_wdata,
+    output wire mem_wr,
+    input wire [DATA_W-1:0] mem_rdata,
+    input wire mem_ready
 );
-    localparam [31:0] L2_SIZE = 32'd524288;
-    localparam [31:0] L1_SIZE = 32'd8192;
-    localparam LINE_SIZE = 8;
-    localparam LINE_BYTES = LINE_SIZE * 8;
-    localparam NUM_LINES = L2_SIZE / LINE_BYTES;
-    // L2 (Total: 256KB)
-    
-    reg l2_rd_en;
-    reg l2_wr_en;
-    reg [63:0] l2_addr;
-    reg [63:0] l2_wr_data;
+    // Params and stuff
+    localparam NUM_LINES = L2_SIZE / LINE_SIZE;
 
-    wire [63:0] l2_data;
-    wire l2_rd_done;
-    wire l2_wr_done;
+    // Core enables and resets
+    reg [NUM_CORES-1:0] core_enable;
+    wire [NUM_CORES-1:0] core_reset = {NUM_CORES{rst}};
+    wire [NUM_CORES-1:0] core_inuse;
 
-    mem #(.DEPTH(L2_SIZE), .DATA_W(64)) l2 ( // 256 KB
+    // L1 cache controller signals
+    wire [NUM_CORES-1:0] l1_req;
+    wire [NUM_CORES-1:0] l1_wr;
+    wire [ADDR_W-1:0] l1_addr [NUM_CORES-1:0];
+    wire [DATA_W-1:0] l1_wdata [NUM_CORES-1:0];
+    wire [DATA_W-1:0] l1_rdata [NUM_CORES-1:0];
+    wire [NUM_CORES-1:0] l1_ready;
+    wire [NUM_CORES-1:0] l1_hit;
+
+    // Instantiate cores
+    genvar i;
+    generate
+        for (i = 0; i < NUM_CORES; i = i+1) begin : cores
+            core #(
+                .DATA_W(DATA_W),
+                .ADDR_W(ADDR_W),
+                .LINE_SIZE(LINE_SIZE)
+            ) c_inst (
+                .clk(clk),
+                .rst(rst),
+                .enable(core_enable[i]),
+                .core_reset(core_reset[i]),
+                .core_inuse(core_inuse[i]),
+
+                // L1 cache memory interface
+                .mem_req(l1_req[i]),
+                .mem_addr(l1_addr[i]),
+                .mem_wdata(l1_wdata[i]),
+                .mem_wr(l1_wr[i]),
+                .mem_rdata(l1_rdata[i]),
+                .mem_ready(l1_ready[i])
+            );
+        end
+    endgenerate
+
+    // Cache Controller for L2
+    wire l2_rd_en, l2_wr_en;
+    reg [ADDR_W-1:0] l2_addr;
+    reg [DATA_W-1:0] l2_wr_data;
+    wire [DATA_W-1:0] l2_rd_data;
+    wire l2_hit, l2_ready;
+
+    wire l2_mem_in_use, l2_using_mem;
+    assign l2_mem_in_use = 0;
+
+    cache_controller #(
+        .DATA_W(DATA_W),
+        .ADDR_W(ADDR_W),
+        .NUM_LINES(NUM_LINES),
+        .LINE_SIZE(LINE_SIZE),
+        .SIZE(L2_SIZE)
+    ) l2 (
         .clk(clk),
         .rst(rst),
+
         .rd_en(l2_rd_en),
         .wr_en(l2_wr_en),
         .addr(l2_addr),
         .wr_data(l2_wr_data),
-        .rd_data(l2_data),
+        .rd_data(l2_rd_data),
+        .hit(l2_hit),
+        .ready(l2_ready),
 
-        .rd_done(l2_rd_done),
-        .wr_done(l2_wr_done)
+        .mem_in_use(l2_mem_in_use),
+        .using_mem(l2_using_mem),
+
+        .mem_req(mem_req),
+        .mem_wr(mem_wr),
+        .mem_addr(mem_addr),
+        .mem_wdata(mem_wdata),
+        .mem_rdata(mem_rdata),
+        .mem_ready(mem_ready),
+        .mem_hit(mem_hit)
     );
 
-    reg [3:0] l2_state;
-    localparam [3:0] L2_IDLE = 4'd0;
-    localparam [3:0] L2_GRANT = 4'd1;
-    localparam [3:0] L2_FILL = 4'd2;
+    wire [ADDR_W*NUM_CORES-1:0] arb_addr;
+    wire [DATA_W*NUM_CORES-1:0] arb_wdata;
+    wire [DATA_W*NUM_CORES-1:0] arb_rdata;
+    wire [NUM_CORES-1:0] arb_ready;
+    wire [NUM_CORES-1:0] arb_hit;
 
-    reg [63:0] l2_refill_addr;
-    reg [31:0] l2_fill_index; // 512 KB = 524288 bytes
-    reg [63:0] l2_baddr;
-    reg [63:0] l2_line_valid [NUM_LINES];
-
-    // Core wires
-    wire [3:0] c_ring_req;
-    wire [63:0] c_ring_addr [3:0];
-    reg [3:0] c_ring_ready;
-    reg [63:0] c0_ring_rdata [0:LINE_SIZE-1];
-    reg [63:0] c1_ring_rdata [0:LINE_SIZE-1];
-    reg [63:0] c2_ring_rdata [0:LINE_SIZE-1];
-    reg [63:0] c3_ring_rdata [0:LINE_SIZE-1];
-
-    wire [3:0] core_inuse;
-    
-    // Core enable/reset
-    reg [3:0] core_enable;
-    wire [3:0] core_reset;
-
-    assign core_reset = {4{rst}};
-
-    core #(.DATA_W(64), .ADDR_W(64)) c0 (
-        .clk(clk),
-        .rst(rst),
-        .enable(core_enable[0]),
-        .core_reset(core_reset[0]),
-        .core_inuse(core_inuse[0]),
-        .ring_req(c_ring_req[0]),
-        .ring_addr(c_ring_addr[0]),
-        .ring_ready(c_ring_ready[0]),
-        .ring_rdata(c0_ring_rdata)
-    );
-
-    core #(.DATA_W(64), .ADDR_W(64)) c1 (
-        .clk(clk),
-        .rst(rst),
-        .enable(core_enable[1]),
-        .core_reset(core_reset[1]),
-        .core_inuse(core_inuse[1]),
-        .ring_req(c_ring_req[1]),
-        .ring_addr(c_ring_addr[1]),
-        .ring_ready(c_ring_ready[1]),
-        .ring_rdata(c1_ring_rdata)
-    );
-
-
-    core #(.DATA_W(64), .ADDR_W(64)) c2 (
-        .clk(clk),
-        .rst(rst),
-        .enable(core_enable[2]),
-        .core_reset(core_reset[2]),
-        .core_inuse(core_inuse[2]),
-        .ring_req(c_ring_req[2]),
-        .ring_addr(c_ring_addr[2]),
-        .ring_ready(c_ring_ready[2]),
-        .ring_rdata(c2_ring_rdata)
-    );
-
-
-    core #(.DATA_W(64), .ADDR_W(64)) c3 (
-        .clk(clk),
-        .rst(rst),
-        .enable(core_enable[3]),
-        .core_reset(core_reset[3]),
-        .core_inuse(core_inuse[3]),
-        .ring_req(c_ring_req[3]),
-        .ring_addr(c_ring_addr[3]),
-        .ring_ready(c_ring_ready[3]),
-        .ring_rdata(c3_ring_rdata)
-    );
-
-    integer j;
-    reg [2:0] coreidx;
-    reg [31:0] k;
-
-    always @(posedge clk) begin
-        if (rst) begin
-            ring_req <= 0;
-            ring_addr <= 0;
-            l2_state <= L2_IDLE;
-            l2_wr_en <= 0;
-            l2_fill_index <= 0;
-            l2_refill_addr <= 0;
-            k <= 0;
-            coreidx <= 0;
-            for (integer l = 0; l < NUM_LINES; l = l + 1)
-                l2_line_valid[l] <= 1'b0;
-        end else begin
-            case (l2_state)
-                L2_IDLE: begin
-                    if (c_ring_req[0]) begin
-                        l2_refill_addr <= c_ring_addr[0];
-                        coreidx <= 0;
-                        l2_state <= l2_line_valid[(c_ring_addr[0][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
-                        if (!l2_line_valid[(c_ring_addr[0][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
-                    end else if (c_ring_req[1]) begin
-                        l2_refill_addr <= c_ring_addr[1];
-                        coreidx <= 1;
-                        l2_state <= l2_line_valid[(c_ring_addr[1][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
-                        if (!l2_line_valid[(c_ring_addr[1][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
-                    end else if (c_ring_req[2]) begin
-                        l2_refill_addr <= c_ring_addr[2];
-                        coreidx <= 2;
-                        l2_state <= l2_line_valid[(c_ring_addr[2][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
-                        if (!l2_line_valid[(c_ring_addr[2][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
-                    end else if (c_ring_req[3]) begin
-                        l2_refill_addr <= c_ring_addr[3];
-                        coreidx <= 3;
-                        l2_state <= l2_line_valid[(c_ring_addr[3][17:0]) / LINE_BYTES] ? L2_GRANT : L2_FILL;
-                        if (!l2_line_valid[(c_ring_addr[3][17:0]) / LINE_BYTES]) ring_req <= 1'b1;
-                    end
-                end
-                L2_GRANT: begin
-                    if (ring_ready && ring_req) begin
-                        l2_state <= L2_FILL;
-                        l2_fill_index <= 0;
-                    end else if (!ring_req) begin
-                        l2_rd_en <= 1'b1;
-                        if (k <= LINE_SIZE-1 && l2_rd_done) begin
-                            l2_addr <= l2_addr + LINE_BYTES;
-                            k <= k + 1;
-                            case (coreidx)
-                                0:
-                                    c0_ring_rdata[k] <= l2_data;
-                                1:
-                                    c1_ring_rdata[k] <= l2_data;
-                                2:
-                                    c2_ring_rdata[k] <= l2_data;
-                                3:
-                                    c3_ring_rdata[k] <= l2_data;
-                            endcase
-                        end else if (k > LINE_SIZE-1) begin
-                            l2_rd_en <= 1'b0;
-                            c_ring_ready[coreidx] <= 1'b1;
-                            coreidx <= 0;
-                            l2_state <= L2_IDLE;
-                            k <= 0;
-                        end
-                    end
-                end
-                L2_FILL: begin
-                    if ((ring_ready && ring_req) || !ring_req) begin
-                        l2_wr_en <= 1'b1;
-                        l2_addr <= l2_refill_addr + (l2_fill_index * 8);
-                        l2_wr_data <= ring_rdata[l2_fill_index];
-                        l2_fill_index <= l2_fill_index + 1;
-
-                        if (l2_fill_index >= LINE_SIZE) begin
-                            l2_wr_en <= 1'b0;
-                            l2_line_valid[l2_refill_addr / LINE_BYTES] <= 1'b1;
-                            ring_req <= 1'b0;
-                            l2_state <= L2_IDLE;
-                        end
-                    end
-                end
-            endcase
+    genvar j;
+    generate
+        for (j = 0; j < NUM_CORES; j = j + 1) begin : flatten
+            assign arb_addr[ADDR_W*(j+1)-1 -: ADDR_W] = l1_addr[j];
+            assign arb_wdata[DATA_W*(j+1)-1 -: DATA_W] = l1_wdata[j];
+            assign arb_rdata[DATA_W*(j+1)-1 -: DATA_W] = l1_rdata[j];
         end
-    end
+    endgenerate
 
-    // Round-Robin
-    always @(*) begin
-        if (rst) begin
-            core_enable[0] = 1'b1;
-            core_enable[1] = 1'b0;
-            core_enable[2] = 1'b0;
-            core_enable[3] = 1'b0;
-        end else begin
-            // Default: no ready feedback
-            for (j = 0; j < 4; j=j+1) begin
-                c_ring_ready[j] = 0;
-            end
+    reg l2_req, l2_wr;
+    reg [$clog2(NUM_CORES)-1:0] granted_core;
+    mem_arbiter #(
+        .NUM_CORES(NUM_CORES),
+        .ADDR_W(ADDR_W),
+        .DATA_W(DATA_W)
+    ) arbiter (
+        .clk(clk),
+        .rst(rst),
+        
+        .req(l1_req),
+        .wr(l1_wr),
+        .addr(arb_addr),
+        .wdata(arb_wdata),
+        .rdata(arb_rdata),
+        .hit(l1_hit),
+        .ready(l1_ready),
+
+        .mem_ready(l2_ready),
+        
+        .mem_req(l2_req),
+        .mem_wr(l2_wr),
+        .mem_addr(l2_addr),
+        .mem_rdata(l2_rd_data),
+        .mem_wdata(l2_wr_data),
+        .granted_core(granted_core)
+    );
+
+    assign l2_rd_en = l2_req && !l2_wr;
+    assign l2_wr_en = l2_req && l2_wr;
+
+    genvar k;
+    generate
+        for (k = 0; k < NUM_CORES; k = k + 1) begin : unflatten
+            assign l1_rdata[k] = arb_rdata[DATA_W*(k+1)-1 -: DATA_W];
         end
-    end
+    endgenerate
 
-    // Initially, cores are disabled EXCEPT core 0
+    genvar m;
+    generate
+        for (m = 0; m < NUM_CORES; m = m + 1) begin : assign_ready_hit
+            assign l1_ready[m] = arb_ready[m];
+            assign l1_hit[m] = arb_hit[m];
+        end
+    endgenerate
+
+    // Initialize: enable only core 0
     initial begin
-        core_enable[0] = 1'b1;
-        core_enable[1] = 1'b0;
-        core_enable[2] = 1'b0;
-        core_enable[3] = 1'b0;
+        core_enable = 4'b0001;
     end
-
 endmodule
