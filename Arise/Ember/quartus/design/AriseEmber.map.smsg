@@ -1,0 +1,4 @@
+Warning (10268): Verilog HDL information at istate.v(29): always construct contains both blocking and non-blocking assignments File: /home/AkshuDev/Projects/Pheonix-CPUs/Arise/Ember/istate.v Line: 29
+Info (10281): Verilog HDL Declaration information at cache_controller.v(28): object "mem_req" differs only in case from object "MEM_REQ" in the same scope File: /home/AkshuDev/Projects/Pheonix-CPUs/Arise/Ember/cache_controller.v Line: 28
+Info (10281): Verilog HDL Declaration information at cache_controller.v(42): object "I" differs only in case from object "i" in the same scope File: /home/AkshuDev/Projects/Pheonix-CPUs/Arise/Ember/cache_controller.v Line: 42
+Warning (10268): Verilog HDL information at mem_arbiter.v(36): always construct contains both blocking and non-blocking assignments File: /home/AkshuDev/Projects/Pheonix-CPUs/Arise/Ember/mem_arbiter.v Line: 36

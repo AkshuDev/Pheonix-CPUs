@@ -4,7 +4,7 @@ module cpu (
     input wire clk,
     input wire rst
 );
-    localparam [31:0] L3_SIZE = 32'd4194304; // 4 MB
+    localparam L3_SIZE = 1024; // 32MB in reality (33554432 or 1024*1024*32)
     localparam LINE_SIZE = 8;
     localparam LINE_BYTES = LINE_SIZE * 8;
 

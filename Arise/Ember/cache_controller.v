@@ -86,13 +86,6 @@ module cache_controller #(
 
     // Reset Protocol
     integer i;
-    always @(posedge clk) begin
-        if (rst) begin
-            for (i=0;i<NUM_LINES;i=i+1)
-                state[i] <= I;
-        end
-    end
-
     integer lookup_cycles;
     // FSM Sequential
     always @(posedge clk) begin
@@ -107,6 +100,9 @@ module cache_controller #(
             reg_rd <= 0;
             reg_wr <= 0;
             lookup_cycles <= 0;
+
+            for (i=0;i<NUM_LINES;i=i+1)
+                state[i] <= I;
         end else begin
             state_fsm <= next_state_fsm;
 

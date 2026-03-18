@@ -5,7 +5,7 @@ module supercore #(
     parameter ADDR_W = 64,
     parameter NUM_CORES = 4,
     parameter LINE_SIZE = 8,
-    parameter L2_SIZE = 512*1024
+    parameter L2_SIZE = 512 // 512KB in reality (1024*512)
 ) (
     input wire clk,
     input wire rst,

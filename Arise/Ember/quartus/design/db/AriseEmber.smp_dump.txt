@@ -1,0 +1,343 @@
+
+State Machine - |cpu|cpu_state
+Name cpu_state.ST_GRANT 
+cpu_state.ST_IDLE 0 
+cpu_state.ST_GRANT 1 
+
+State Machine - |cpu|supercore:sc0|cache_controller:l2|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|cache_controller:l2|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[1].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[3].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[1].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[1].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[0].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[0].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[3].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[3].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[2].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[2].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[1].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[0].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[0].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[3].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[2].c_inst|thread:t1|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[2].c_inst|thread:t0|state
+Name state.ST_EXECUTE_P2 state.ST_EXECUTE state.ST_VERIFY state.ST_DECODE state.ST_WAIT_L1I state.ST_FETCH state.ST_IDLE state.ST_LOCKED 
+state.ST_IDLE 0 0 0 0 0 0 0 0 
+state.ST_FETCH 0 0 0 0 0 1 1 0 
+state.ST_WAIT_L1I 0 0 0 0 1 0 1 0 
+state.ST_DECODE 0 0 0 1 0 0 1 0 
+state.ST_VERIFY 0 0 1 0 0 0 1 0 
+state.ST_EXECUTE 0 1 0 0 0 0 1 0 
+state.ST_EXECUTE_P2 1 0 0 0 0 0 1 0 
+state.ST_LOCKED 0 0 0 0 0 0 1 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[1].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[0].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[3].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[2].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[1].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[0].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[3].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[2].c_inst|cache_controller:cachs[1].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[0].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[1].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[2].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc0|core:cores[3].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[0].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[1].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[2].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 
+
+State Machine - |cpu|supercore:sc1|core:cores[3].c_inst|cache_controller:cachs[0].l1|state_fsm
+Name state_fsm.UPDATE state_fsm.MEM_WAIT state_fsm.MEM_REQ state_fsm.WRITEBACK state_fsm.LOOKUP state_fsm.IDLE 
+state_fsm.IDLE 0 0 0 0 0 0 
+state_fsm.LOOKUP 0 0 0 0 1 1 
+state_fsm.WRITEBACK 0 0 0 1 0 1 
+state_fsm.MEM_REQ 0 0 1 0 0 1 
+state_fsm.MEM_WAIT 0 1 0 0 0 1 
+state_fsm.UPDATE 1 0 0 0 0 1 

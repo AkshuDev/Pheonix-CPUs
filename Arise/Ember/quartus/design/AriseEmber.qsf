@@ -1,0 +1,21 @@
+set_global_assignment -name DEVICE 5CGXFC7C7F23C8
+set_global_assignment -name TOP_LEVEL_ENTITY cpu
+set_global_assignment -name FAMILY "Cyclone V"
+
+# Files
+set_global_assignment -name SYSTEMVERILOG_FILE ../../cpu.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../supercore.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../core.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../thread.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../alu.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../decoder.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../regfile.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../istate.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../cache_controller.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../mem.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../mem_arbiter.v
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

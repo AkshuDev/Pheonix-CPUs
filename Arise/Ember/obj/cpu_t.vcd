@@ -1,5 +1,5 @@
 $date
-	Wed Mar 18 21:26:10 2026
+	Wed Mar 18 21:39:45 2026
 $end
 $version
 	Icarus Verilog
@@ -21,7 +21,7 @@ $var wire 1 ' sc0_req $end
 $var wire 64 ( sc0_addr [63:0] $end
 $var wire 1 ) l3_ready $end
 $var wire 64 * l3_rdata [63:0] $end
-$var parameter 32 + L3_SIZE $end
+$var parameter 64 + L3_SIZE $end
 $var parameter 64 , LINE_BYTES $end
 $var parameter 32 - LINE_SIZE $end
 $var parameter 2 . ST_FILL $end
@@ -48,7 +48,7 @@ $var wire 64 > wr_data [63:0] $end
 $var wire 1 7 wr_en $end
 $var parameter 32 ? BYTES $end
 $var parameter 32 @ DATA_W $end
-$var parameter 32 A DEPTH $end
+$var parameter 64 A DEPTH $end
 $var reg 64 B rd_data [63:0] $end
 $var reg 1 ) rd_done $end
 $var reg 1 C wr_done $end
@@ -84,10 +84,10 @@ $var wire 4 Y core_reset [3:0] $end
 $var wire 4 Z core_inuse [3:0] $end
 $var parameter 32 [ ADDR_W $end
 $var parameter 32 \ DATA_W $end
-$var parameter 64 ] L2_SIZE $end
+$var parameter 32 ] L2_SIZE $end
 $var parameter 32 ^ LINE_SIZE $end
 $var parameter 32 _ NUM_CORES $end
-$var parameter 64 ` NUM_LINES $end
+$var parameter 32 ` NUM_LINES $end
 $var reg 4 a core_enable [3:0] $end
 $scope begin cores[0] $end
 $var parameter 2 b i $end
@@ -143,15 +143,15 @@ $var wire 64 2" alu_res [63:0] $end
 $var wire 1 3" alu_done $end
 $var parameter 32 4" ADDR_W $end
 $var parameter 32 5" DATA_W $end
-$var parameter 64 6" L1D_SIZE $end
-$var parameter 64 7" L1ID_SIZE $end
-$var parameter 64 8" L1I_SIZE $end
-$var parameter 64 9" L1_SIZE $end
+$var parameter 32 6" L1D_SIZE $end
+$var parameter 32 7" L1ID_SIZE $end
+$var parameter 32 8" L1I_SIZE $end
+$var parameter 32 9" L1_SIZE $end
 $var parameter 32 :" LINE_SIZE $end
-$var parameter 64 ;" NUM_LINES $end
-$var parameter 64 <" NUM_LINES_L1D $end
-$var parameter 64 =" NUM_LINES_L1I $end
-$var parameter 64 >" NUM_LINES_L1ID $end
+$var parameter 32 ;" NUM_LINES $end
+$var parameter 32 <" NUM_LINES_L1D $end
+$var parameter 32 =" NUM_LINES_L1I $end
+$var parameter 32 >" NUM_LINES_L1ID $end
 $var reg 64 ?" alu_a [63:0] $end
 $var reg 64 @" alu_b [63:0] $end
 $var reg 1 A" alu_busy $end
@@ -200,16 +200,16 @@ $var wire 64 g" wr_data [63:0] $end
 $var wire 1 h" wr_en $end
 $var wire 1 i" valid $end
 $var wire 1 j" tag_match $end
-$var wire 48 k" tag [47:0] $end
+$var wire 58 k" tag [57:0] $end
 $var wire 1 l" miss $end
-$var wire 13 m" index [12:0] $end
+$var wire 3 m" index [2:0] $end
 $var parameter 32 n" ADDR_W $end
 $var parameter 32 o" DATA_W $end
 $var parameter 32 p" INDEX_BITS $end
 $var parameter 32 q" LINE_SIZE $end
-$var parameter 64 r" NUM_LINES $end
+$var parameter 32 r" NUM_LINES $end
 $var parameter 32 s" OFFSET_BITS $end
-$var parameter 64 t" SIZE $end
+$var parameter 32 t" SIZE $end
 $var parameter 34 u" TAG_BITS $end
 $var reg 1 v" hit $end
 $var reg 64 w" mem_addr [63:0] $end
@@ -247,16 +247,16 @@ $var wire 64 2# wr_data [63:0] $end
 $var wire 1 3# wr_en $end
 $var wire 1 4# valid $end
 $var wire 1 5# tag_match $end
-$var wire 48 6# tag [47:0] $end
+$var wire 58 6# tag [57:0] $end
 $var wire 1 7# miss $end
-$var wire 13 8# index [12:0] $end
+$var wire 3 8# index [2:0] $end
 $var parameter 32 9# ADDR_W $end
 $var parameter 32 :# DATA_W $end
 $var parameter 32 ;# INDEX_BITS $end
 $var parameter 32 <# LINE_SIZE $end
-$var parameter 64 =# NUM_LINES $end
+$var parameter 32 =# NUM_LINES $end
 $var parameter 32 ># OFFSET_BITS $end
-$var parameter 64 ?# SIZE $end
+$var parameter 32 ?# SIZE $end
 $var parameter 34 @# TAG_BITS $end
 $var reg 1 A# hit $end
 $var reg 64 B# mem_addr [63:0] $end
@@ -659,15 +659,15 @@ $var wire 64 Q& alu_res [63:0] $end
 $var wire 1 R& alu_done $end
 $var parameter 32 S& ADDR_W $end
 $var parameter 32 T& DATA_W $end
-$var parameter 64 U& L1D_SIZE $end
-$var parameter 64 V& L1ID_SIZE $end
-$var parameter 64 W& L1I_SIZE $end
-$var parameter 64 X& L1_SIZE $end
+$var parameter 32 U& L1D_SIZE $end
+$var parameter 32 V& L1ID_SIZE $end
+$var parameter 32 W& L1I_SIZE $end
+$var parameter 32 X& L1_SIZE $end
 $var parameter 32 Y& LINE_SIZE $end
-$var parameter 64 Z& NUM_LINES $end
-$var parameter 64 [& NUM_LINES_L1D $end
-$var parameter 64 \& NUM_LINES_L1I $end
-$var parameter 64 ]& NUM_LINES_L1ID $end
+$var parameter 32 Z& NUM_LINES $end
+$var parameter 32 [& NUM_LINES_L1D $end
+$var parameter 32 \& NUM_LINES_L1I $end
+$var parameter 32 ]& NUM_LINES_L1ID $end
 $var reg 64 ^& alu_a [63:0] $end
 $var reg 64 _& alu_b [63:0] $end
 $var reg 1 `& alu_busy $end
@@ -716,16 +716,16 @@ $var wire 64 (' wr_data [63:0] $end
 $var wire 1 )' wr_en $end
 $var wire 1 *' valid $end
 $var wire 1 +' tag_match $end
-$var wire 48 ,' tag [47:0] $end
+$var wire 58 ,' tag [57:0] $end
 $var wire 1 -' miss $end
-$var wire 13 .' index [12:0] $end
+$var wire 3 .' index [2:0] $end
 $var parameter 32 /' ADDR_W $end
 $var parameter 32 0' DATA_W $end
 $var parameter 32 1' INDEX_BITS $end
 $var parameter 32 2' LINE_SIZE $end
-$var parameter 64 3' NUM_LINES $end
+$var parameter 32 3' NUM_LINES $end
 $var parameter 32 4' OFFSET_BITS $end
-$var parameter 64 5' SIZE $end
+$var parameter 32 5' SIZE $end
 $var parameter 34 6' TAG_BITS $end
 $var reg 1 7' hit $end
 $var reg 64 8' mem_addr [63:0] $end
@@ -763,16 +763,16 @@ $var wire 64 Q' wr_data [63:0] $end
 $var wire 1 R' wr_en $end
 $var wire 1 S' valid $end
 $var wire 1 T' tag_match $end
-$var wire 48 U' tag [47:0] $end
+$var wire 58 U' tag [57:0] $end
 $var wire 1 V' miss $end
-$var wire 13 W' index [12:0] $end
+$var wire 3 W' index [2:0] $end
 $var parameter 32 X' ADDR_W $end
 $var parameter 32 Y' DATA_W $end
 $var parameter 32 Z' INDEX_BITS $end
 $var parameter 32 [' LINE_SIZE $end
-$var parameter 64 \' NUM_LINES $end
+$var parameter 32 \' NUM_LINES $end
 $var parameter 32 ]' OFFSET_BITS $end
-$var parameter 64 ^' SIZE $end
+$var parameter 32 ^' SIZE $end
 $var parameter 34 _' TAG_BITS $end
 $var reg 1 `' hit $end
 $var reg 64 a' mem_addr [63:0] $end
@@ -1175,15 +1175,15 @@ $var wire 64 p* alu_res [63:0] $end
 $var wire 1 q* alu_done $end
 $var parameter 32 r* ADDR_W $end
 $var parameter 32 s* DATA_W $end
-$var parameter 64 t* L1D_SIZE $end
-$var parameter 64 u* L1ID_SIZE $end
-$var parameter 64 v* L1I_SIZE $end
-$var parameter 64 w* L1_SIZE $end
+$var parameter 32 t* L1D_SIZE $end
+$var parameter 32 u* L1ID_SIZE $end
+$var parameter 32 v* L1I_SIZE $end
+$var parameter 32 w* L1_SIZE $end
 $var parameter 32 x* LINE_SIZE $end
-$var parameter 64 y* NUM_LINES $end
-$var parameter 64 z* NUM_LINES_L1D $end
-$var parameter 64 {* NUM_LINES_L1I $end
-$var parameter 64 |* NUM_LINES_L1ID $end
+$var parameter 32 y* NUM_LINES $end
+$var parameter 32 z* NUM_LINES_L1D $end
+$var parameter 32 {* NUM_LINES_L1I $end
+$var parameter 32 |* NUM_LINES_L1ID $end
 $var reg 64 }* alu_a [63:0] $end
 $var reg 64 ~* alu_b [63:0] $end
 $var reg 1 !+ alu_busy $end
@@ -1232,16 +1232,16 @@ $var wire 64 G+ wr_data [63:0] $end
 $var wire 1 H+ wr_en $end
 $var wire 1 I+ valid $end
 $var wire 1 J+ tag_match $end
-$var wire 48 K+ tag [47:0] $end
+$var wire 58 K+ tag [57:0] $end
 $var wire 1 L+ miss $end
-$var wire 13 M+ index [12:0] $end
+$var wire 3 M+ index [2:0] $end
 $var parameter 32 N+ ADDR_W $end
 $var parameter 32 O+ DATA_W $end
 $var parameter 32 P+ INDEX_BITS $end
 $var parameter 32 Q+ LINE_SIZE $end
-$var parameter 64 R+ NUM_LINES $end
+$var parameter 32 R+ NUM_LINES $end
 $var parameter 32 S+ OFFSET_BITS $end
-$var parameter 64 T+ SIZE $end
+$var parameter 32 T+ SIZE $end
 $var parameter 34 U+ TAG_BITS $end
 $var reg 1 V+ hit $end
 $var reg 64 W+ mem_addr [63:0] $end
@@ -1279,16 +1279,16 @@ $var wire 64 p+ wr_data [63:0] $end
 $var wire 1 q+ wr_en $end
 $var wire 1 r+ valid $end
 $var wire 1 s+ tag_match $end
-$var wire 48 t+ tag [47:0] $end
+$var wire 58 t+ tag [57:0] $end
 $var wire 1 u+ miss $end
-$var wire 13 v+ index [12:0] $end
+$var wire 3 v+ index [2:0] $end
 $var parameter 32 w+ ADDR_W $end
 $var parameter 32 x+ DATA_W $end
 $var parameter 32 y+ INDEX_BITS $end
 $var parameter 32 z+ LINE_SIZE $end
-$var parameter 64 {+ NUM_LINES $end
+$var parameter 32 {+ NUM_LINES $end
 $var parameter 32 |+ OFFSET_BITS $end
-$var parameter 64 }+ SIZE $end
+$var parameter 32 }+ SIZE $end
 $var parameter 34 ~+ TAG_BITS $end
 $var reg 1 !, hit $end
 $var reg 64 ", mem_addr [63:0] $end
@@ -1691,15 +1691,15 @@ $var wire 64 1/ alu_res [63:0] $end
 $var wire 1 2/ alu_done $end
 $var parameter 32 3/ ADDR_W $end
 $var parameter 32 4/ DATA_W $end
-$var parameter 64 5/ L1D_SIZE $end
-$var parameter 64 6/ L1ID_SIZE $end
-$var parameter 64 7/ L1I_SIZE $end
-$var parameter 64 8/ L1_SIZE $end
+$var parameter 32 5/ L1D_SIZE $end
+$var parameter 32 6/ L1ID_SIZE $end
+$var parameter 32 7/ L1I_SIZE $end
+$var parameter 32 8/ L1_SIZE $end
 $var parameter 32 9/ LINE_SIZE $end
-$var parameter 64 :/ NUM_LINES $end
-$var parameter 64 ;/ NUM_LINES_L1D $end
-$var parameter 64 </ NUM_LINES_L1I $end
-$var parameter 64 =/ NUM_LINES_L1ID $end
+$var parameter 32 :/ NUM_LINES $end
+$var parameter 32 ;/ NUM_LINES_L1D $end
+$var parameter 32 </ NUM_LINES_L1I $end
+$var parameter 32 =/ NUM_LINES_L1ID $end
 $var reg 64 >/ alu_a [63:0] $end
 $var reg 64 ?/ alu_b [63:0] $end
 $var reg 1 @/ alu_busy $end
@@ -1748,16 +1748,16 @@ $var wire 64 f/ wr_data [63:0] $end
 $var wire 1 g/ wr_en $end
 $var wire 1 h/ valid $end
 $var wire 1 i/ tag_match $end
-$var wire 48 j/ tag [47:0] $end
+$var wire 58 j/ tag [57:0] $end
 $var wire 1 k/ miss $end
-$var wire 13 l/ index [12:0] $end
+$var wire 3 l/ index [2:0] $end
 $var parameter 32 m/ ADDR_W $end
 $var parameter 32 n/ DATA_W $end
 $var parameter 32 o/ INDEX_BITS $end
 $var parameter 32 p/ LINE_SIZE $end
-$var parameter 64 q/ NUM_LINES $end
+$var parameter 32 q/ NUM_LINES $end
 $var parameter 32 r/ OFFSET_BITS $end
-$var parameter 64 s/ SIZE $end
+$var parameter 32 s/ SIZE $end
 $var parameter 34 t/ TAG_BITS $end
 $var reg 1 u/ hit $end
 $var reg 64 v/ mem_addr [63:0] $end
@@ -1795,16 +1795,16 @@ $var wire 64 10 wr_data [63:0] $end
 $var wire 1 20 wr_en $end
 $var wire 1 30 valid $end
 $var wire 1 40 tag_match $end
-$var wire 48 50 tag [47:0] $end
+$var wire 58 50 tag [57:0] $end
 $var wire 1 60 miss $end
-$var wire 13 70 index [12:0] $end
+$var wire 3 70 index [2:0] $end
 $var parameter 32 80 ADDR_W $end
 $var parameter 32 90 DATA_W $end
 $var parameter 32 :0 INDEX_BITS $end
 $var parameter 32 ;0 LINE_SIZE $end
-$var parameter 64 <0 NUM_LINES $end
+$var parameter 32 <0 NUM_LINES $end
 $var parameter 32 =0 OFFSET_BITS $end
-$var parameter 64 >0 SIZE $end
+$var parameter 32 >0 SIZE $end
 $var parameter 34 ?0 TAG_BITS $end
 $var reg 1 @0 hit $end
 $var reg 64 A0 mem_addr [63:0] $end
@@ -2193,16 +2193,16 @@ $var wire 64 83 wr_data [63:0] $end
 $var wire 1 G wr_en $end
 $var wire 1 93 valid $end
 $var wire 1 :3 tag_match $end
-$var wire 45 ;3 tag [44:0] $end
+$var wire 55 ;3 tag [54:0] $end
 $var wire 1 <3 miss $end
-$var wire 16 =3 index [15:0] $end
+$var wire 6 =3 index [5:0] $end
 $var parameter 32 >3 ADDR_W $end
 $var parameter 32 ?3 DATA_W $end
 $var parameter 32 @3 INDEX_BITS $end
 $var parameter 32 A3 LINE_SIZE $end
-$var parameter 64 B3 NUM_LINES $end
+$var parameter 32 B3 NUM_LINES $end
 $var parameter 32 C3 OFFSET_BITS $end
-$var parameter 64 D3 SIZE $end
+$var parameter 32 D3 SIZE $end
 $var parameter 34 E3 TAG_BITS $end
 $var reg 1 R hit $end
 $var reg 64 F3 mem_addr [63:0] $end
@@ -2252,10 +2252,10 @@ $var wire 4 g3 core_reset [3:0] $end
 $var wire 4 h3 core_inuse [3:0] $end
 $var parameter 32 i3 ADDR_W $end
 $var parameter 32 j3 DATA_W $end
-$var parameter 64 k3 L2_SIZE $end
+$var parameter 32 k3 L2_SIZE $end
 $var parameter 32 l3 LINE_SIZE $end
 $var parameter 32 m3 NUM_CORES $end
-$var parameter 64 n3 NUM_LINES $end
+$var parameter 32 n3 NUM_LINES $end
 $var reg 4 o3 core_enable [3:0] $end
 $scope begin cores[0] $end
 $var parameter 2 p3 i $end
@@ -2311,15 +2311,15 @@ $var wire 64 @4 alu_res [63:0] $end
 $var wire 1 A4 alu_done $end
 $var parameter 32 B4 ADDR_W $end
 $var parameter 32 C4 DATA_W $end
-$var parameter 64 D4 L1D_SIZE $end
-$var parameter 64 E4 L1ID_SIZE $end
-$var parameter 64 F4 L1I_SIZE $end
-$var parameter 64 G4 L1_SIZE $end
+$var parameter 32 D4 L1D_SIZE $end
+$var parameter 32 E4 L1ID_SIZE $end
+$var parameter 32 F4 L1I_SIZE $end
+$var parameter 32 G4 L1_SIZE $end
 $var parameter 32 H4 LINE_SIZE $end
-$var parameter 64 I4 NUM_LINES $end
-$var parameter 64 J4 NUM_LINES_L1D $end
-$var parameter 64 K4 NUM_LINES_L1I $end
-$var parameter 64 L4 NUM_LINES_L1ID $end
+$var parameter 32 I4 NUM_LINES $end
+$var parameter 32 J4 NUM_LINES_L1D $end
+$var parameter 32 K4 NUM_LINES_L1I $end
+$var parameter 32 L4 NUM_LINES_L1ID $end
 $var reg 64 M4 alu_a [63:0] $end
 $var reg 64 N4 alu_b [63:0] $end
 $var reg 1 O4 alu_busy $end
@@ -2368,16 +2368,16 @@ $var wire 64 u4 wr_data [63:0] $end
 $var wire 1 v4 wr_en $end
 $var wire 1 w4 valid $end
 $var wire 1 x4 tag_match $end
-$var wire 48 y4 tag [47:0] $end
+$var wire 58 y4 tag [57:0] $end
 $var wire 1 z4 miss $end
-$var wire 13 {4 index [12:0] $end
+$var wire 3 {4 index [2:0] $end
 $var parameter 32 |4 ADDR_W $end
 $var parameter 32 }4 DATA_W $end
 $var parameter 32 ~4 INDEX_BITS $end
 $var parameter 32 !5 LINE_SIZE $end
-$var parameter 64 "5 NUM_LINES $end
+$var parameter 32 "5 NUM_LINES $end
 $var parameter 32 #5 OFFSET_BITS $end
-$var parameter 64 $5 SIZE $end
+$var parameter 32 $5 SIZE $end
 $var parameter 34 %5 TAG_BITS $end
 $var reg 1 &5 hit $end
 $var reg 64 '5 mem_addr [63:0] $end
@@ -2415,16 +2415,16 @@ $var wire 64 @5 wr_data [63:0] $end
 $var wire 1 A5 wr_en $end
 $var wire 1 B5 valid $end
 $var wire 1 C5 tag_match $end
-$var wire 48 D5 tag [47:0] $end
+$var wire 58 D5 tag [57:0] $end
 $var wire 1 E5 miss $end
-$var wire 13 F5 index [12:0] $end
+$var wire 3 F5 index [2:0] $end
 $var parameter 32 G5 ADDR_W $end
 $var parameter 32 H5 DATA_W $end
 $var parameter 32 I5 INDEX_BITS $end
 $var parameter 32 J5 LINE_SIZE $end
-$var parameter 64 K5 NUM_LINES $end
+$var parameter 32 K5 NUM_LINES $end
 $var parameter 32 L5 OFFSET_BITS $end
-$var parameter 64 M5 SIZE $end
+$var parameter 32 M5 SIZE $end
 $var parameter 34 N5 TAG_BITS $end
 $var reg 1 O5 hit $end
 $var reg 64 P5 mem_addr [63:0] $end
@@ -2827,15 +2827,15 @@ $var wire 64 _8 alu_res [63:0] $end
 $var wire 1 `8 alu_done $end
 $var parameter 32 a8 ADDR_W $end
 $var parameter 32 b8 DATA_W $end
-$var parameter 64 c8 L1D_SIZE $end
-$var parameter 64 d8 L1ID_SIZE $end
-$var parameter 64 e8 L1I_SIZE $end
-$var parameter 64 f8 L1_SIZE $end
+$var parameter 32 c8 L1D_SIZE $end
+$var parameter 32 d8 L1ID_SIZE $end
+$var parameter 32 e8 L1I_SIZE $end
+$var parameter 32 f8 L1_SIZE $end
 $var parameter 32 g8 LINE_SIZE $end
-$var parameter 64 h8 NUM_LINES $end
-$var parameter 64 i8 NUM_LINES_L1D $end
-$var parameter 64 j8 NUM_LINES_L1I $end
-$var parameter 64 k8 NUM_LINES_L1ID $end
+$var parameter 32 h8 NUM_LINES $end
+$var parameter 32 i8 NUM_LINES_L1D $end
+$var parameter 32 j8 NUM_LINES_L1I $end
+$var parameter 32 k8 NUM_LINES_L1ID $end
 $var reg 64 l8 alu_a [63:0] $end
 $var reg 64 m8 alu_b [63:0] $end
 $var reg 1 n8 alu_busy $end
@@ -2884,16 +2884,16 @@ $var wire 64 69 wr_data [63:0] $end
 $var wire 1 79 wr_en $end
 $var wire 1 89 valid $end
 $var wire 1 99 tag_match $end
-$var wire 48 :9 tag [47:0] $end
+$var wire 58 :9 tag [57:0] $end
 $var wire 1 ;9 miss $end
-$var wire 13 <9 index [12:0] $end
+$var wire 3 <9 index [2:0] $end
 $var parameter 32 =9 ADDR_W $end
 $var parameter 32 >9 DATA_W $end
 $var parameter 32 ?9 INDEX_BITS $end
 $var parameter 32 @9 LINE_SIZE $end
-$var parameter 64 A9 NUM_LINES $end
+$var parameter 32 A9 NUM_LINES $end
 $var parameter 32 B9 OFFSET_BITS $end
-$var parameter 64 C9 SIZE $end
+$var parameter 32 C9 SIZE $end
 $var parameter 34 D9 TAG_BITS $end
 $var reg 1 E9 hit $end
 $var reg 64 F9 mem_addr [63:0] $end
@@ -2931,16 +2931,16 @@ $var wire 64 _9 wr_data [63:0] $end
 $var wire 1 `9 wr_en $end
 $var wire 1 a9 valid $end
 $var wire 1 b9 tag_match $end
-$var wire 48 c9 tag [47:0] $end
+$var wire 58 c9 tag [57:0] $end
 $var wire 1 d9 miss $end
-$var wire 13 e9 index [12:0] $end
+$var wire 3 e9 index [2:0] $end
 $var parameter 32 f9 ADDR_W $end
 $var parameter 32 g9 DATA_W $end
 $var parameter 32 h9 INDEX_BITS $end
 $var parameter 32 i9 LINE_SIZE $end
-$var parameter 64 j9 NUM_LINES $end
+$var parameter 32 j9 NUM_LINES $end
 $var parameter 32 k9 OFFSET_BITS $end
-$var parameter 64 l9 SIZE $end
+$var parameter 32 l9 SIZE $end
 $var parameter 34 m9 TAG_BITS $end
 $var reg 1 n9 hit $end
 $var reg 64 o9 mem_addr [63:0] $end
@@ -3343,15 +3343,15 @@ $var wire 64 ~< alu_res [63:0] $end
 $var wire 1 != alu_done $end
 $var parameter 32 "= ADDR_W $end
 $var parameter 32 #= DATA_W $end
-$var parameter 64 $= L1D_SIZE $end
-$var parameter 64 %= L1ID_SIZE $end
-$var parameter 64 &= L1I_SIZE $end
-$var parameter 64 '= L1_SIZE $end
+$var parameter 32 $= L1D_SIZE $end
+$var parameter 32 %= L1ID_SIZE $end
+$var parameter 32 &= L1I_SIZE $end
+$var parameter 32 '= L1_SIZE $end
 $var parameter 32 (= LINE_SIZE $end
-$var parameter 64 )= NUM_LINES $end
-$var parameter 64 *= NUM_LINES_L1D $end
-$var parameter 64 += NUM_LINES_L1I $end
-$var parameter 64 ,= NUM_LINES_L1ID $end
+$var parameter 32 )= NUM_LINES $end
+$var parameter 32 *= NUM_LINES_L1D $end
+$var parameter 32 += NUM_LINES_L1I $end
+$var parameter 32 ,= NUM_LINES_L1ID $end
 $var reg 64 -= alu_a [63:0] $end
 $var reg 64 .= alu_b [63:0] $end
 $var reg 1 /= alu_busy $end
@@ -3400,16 +3400,16 @@ $var wire 64 U= wr_data [63:0] $end
 $var wire 1 V= wr_en $end
 $var wire 1 W= valid $end
 $var wire 1 X= tag_match $end
-$var wire 48 Y= tag [47:0] $end
+$var wire 58 Y= tag [57:0] $end
 $var wire 1 Z= miss $end
-$var wire 13 [= index [12:0] $end
+$var wire 3 [= index [2:0] $end
 $var parameter 32 \= ADDR_W $end
 $var parameter 32 ]= DATA_W $end
 $var parameter 32 ^= INDEX_BITS $end
 $var parameter 32 _= LINE_SIZE $end
-$var parameter 64 `= NUM_LINES $end
+$var parameter 32 `= NUM_LINES $end
 $var parameter 32 a= OFFSET_BITS $end
-$var parameter 64 b= SIZE $end
+$var parameter 32 b= SIZE $end
 $var parameter 34 c= TAG_BITS $end
 $var reg 1 d= hit $end
 $var reg 64 e= mem_addr [63:0] $end
@@ -3447,16 +3447,16 @@ $var wire 64 ~= wr_data [63:0] $end
 $var wire 1 !> wr_en $end
 $var wire 1 "> valid $end
 $var wire 1 #> tag_match $end
-$var wire 48 $> tag [47:0] $end
+$var wire 58 $> tag [57:0] $end
 $var wire 1 %> miss $end
-$var wire 13 &> index [12:0] $end
+$var wire 3 &> index [2:0] $end
 $var parameter 32 '> ADDR_W $end
 $var parameter 32 (> DATA_W $end
 $var parameter 32 )> INDEX_BITS $end
 $var parameter 32 *> LINE_SIZE $end
-$var parameter 64 +> NUM_LINES $end
+$var parameter 32 +> NUM_LINES $end
 $var parameter 32 ,> OFFSET_BITS $end
-$var parameter 64 -> SIZE $end
+$var parameter 32 -> SIZE $end
 $var parameter 34 .> TAG_BITS $end
 $var reg 1 /> hit $end
 $var reg 64 0> mem_addr [63:0] $end
@@ -3859,15 +3859,15 @@ $var wire 64 ?A alu_res [63:0] $end
 $var wire 1 @A alu_done $end
 $var parameter 32 AA ADDR_W $end
 $var parameter 32 BA DATA_W $end
-$var parameter 64 CA L1D_SIZE $end
-$var parameter 64 DA L1ID_SIZE $end
-$var parameter 64 EA L1I_SIZE $end
-$var parameter 64 FA L1_SIZE $end
+$var parameter 32 CA L1D_SIZE $end
+$var parameter 32 DA L1ID_SIZE $end
+$var parameter 32 EA L1I_SIZE $end
+$var parameter 32 FA L1_SIZE $end
 $var parameter 32 GA LINE_SIZE $end
-$var parameter 64 HA NUM_LINES $end
-$var parameter 64 IA NUM_LINES_L1D $end
-$var parameter 64 JA NUM_LINES_L1I $end
-$var parameter 64 KA NUM_LINES_L1ID $end
+$var parameter 32 HA NUM_LINES $end
+$var parameter 32 IA NUM_LINES_L1D $end
+$var parameter 32 JA NUM_LINES_L1I $end
+$var parameter 32 KA NUM_LINES_L1ID $end
 $var reg 64 LA alu_a [63:0] $end
 $var reg 64 MA alu_b [63:0] $end
 $var reg 1 NA alu_busy $end
@@ -3916,16 +3916,16 @@ $var wire 64 tA wr_data [63:0] $end
 $var wire 1 uA wr_en $end
 $var wire 1 vA valid $end
 $var wire 1 wA tag_match $end
-$var wire 48 xA tag [47:0] $end
+$var wire 58 xA tag [57:0] $end
 $var wire 1 yA miss $end
-$var wire 13 zA index [12:0] $end
+$var wire 3 zA index [2:0] $end
 $var parameter 32 {A ADDR_W $end
 $var parameter 32 |A DATA_W $end
 $var parameter 32 }A INDEX_BITS $end
 $var parameter 32 ~A LINE_SIZE $end
-$var parameter 64 !B NUM_LINES $end
+$var parameter 32 !B NUM_LINES $end
 $var parameter 32 "B OFFSET_BITS $end
-$var parameter 64 #B SIZE $end
+$var parameter 32 #B SIZE $end
 $var parameter 34 $B TAG_BITS $end
 $var reg 1 %B hit $end
 $var reg 64 &B mem_addr [63:0] $end
@@ -3963,16 +3963,16 @@ $var wire 64 ?B wr_data [63:0] $end
 $var wire 1 @B wr_en $end
 $var wire 1 AB valid $end
 $var wire 1 BB tag_match $end
-$var wire 48 CB tag [47:0] $end
+$var wire 58 CB tag [57:0] $end
 $var wire 1 DB miss $end
-$var wire 13 EB index [12:0] $end
+$var wire 3 EB index [2:0] $end
 $var parameter 32 FB ADDR_W $end
 $var parameter 32 GB DATA_W $end
 $var parameter 32 HB INDEX_BITS $end
 $var parameter 32 IB LINE_SIZE $end
-$var parameter 64 JB NUM_LINES $end
+$var parameter 32 JB NUM_LINES $end
 $var parameter 32 KB OFFSET_BITS $end
-$var parameter 64 LB SIZE $end
+$var parameter 32 LB SIZE $end
 $var parameter 34 MB TAG_BITS $end
 $var reg 1 NB hit $end
 $var reg 64 OB mem_addr [63:0] $end
@@ -4361,16 +4361,16 @@ $var wire 64 FE wr_data [63:0] $end
 $var wire 1 S3 wr_en $end
 $var wire 1 GE valid $end
 $var wire 1 HE tag_match $end
-$var wire 45 IE tag [44:0] $end
+$var wire 55 IE tag [54:0] $end
 $var wire 1 JE miss $end
-$var wire 16 KE index [15:0] $end
+$var wire 6 KE index [5:0] $end
 $var parameter 32 LE ADDR_W $end
 $var parameter 32 ME DATA_W $end
 $var parameter 32 NE INDEX_BITS $end
 $var parameter 32 OE LINE_SIZE $end
-$var parameter 64 PE NUM_LINES $end
+$var parameter 32 PE NUM_LINES $end
 $var parameter 32 QE OFFSET_BITS $end
-$var parameter 64 RE SIZE $end
+$var parameter 32 RE SIZE $end
 $var parameter 34 SE TAG_BITS $end
 $var reg 1 `3 hit $end
 $var reg 64 TE mem_addr [63:0] $end
@@ -4395,12 +4395,12 @@ $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
-b101101 SE
-b10000000000000000000 RE
+b110111 SE
+b1000000000 RE
 b11 QE
-b10000000000000000 PE
+b1000000 PE
 b1000 OE
-b10000 NE
+b110 NE
 b1000000 ME
 b1000000 LE
 b100 6E
@@ -4451,33 +4451,33 @@ b1000000 oB
 b1000000 nB
 b1000 cB
 b1000000 bB
-b110000 MB
-b10000000000000000 LB
+b111010 MB
+b1000000 LB
 b11 KB
-b10000000000000 JB
+b1000 JB
 b1000 IB
-b1101 HB
+b11 HB
 b1000000 GB
 b1000000 FB
 b1 5B
-b110000 $B
-b10000000000000000 #B
+b111010 $B
+b1000000 #B
 b11 "B
-b10000000000000 !B
+b1000 !B
 b1000 ~A
-b1101 }A
+b11 }A
 b1000000 |A
 b1000000 {A
 b0 jA
-b10000000000000 KA
-b10000000000000 JA
-b10000000000000 IA
-b100000000000000 HA
+b1000 KA
+b1000 JA
+b1000 IA
+b10000 HA
 b1000 GA
-b100000000000000000 FA
-b10000000000000000 EA
-b10000000000000000 DA
-b10000000000000000 CA
+b10000000 FA
+b1000000 EA
+b1000000 DA
+b1000000 CA
 b1000000 BA
 b1000000 AA
 b11 o@
@@ -4526,33 +4526,33 @@ b1000000 P>
 b1000000 O>
 b1000 D>
 b1000000 C>
-b110000 .>
-b10000000000000000 ->
+b111010 .>
+b1000000 ->
 b11 ,>
-b10000000000000 +>
+b1000 +>
 b1000 *>
-b1101 )>
+b11 )>
 b1000000 (>
 b1000000 '>
 b1 t=
-b110000 c=
-b10000000000000000 b=
+b111010 c=
+b1000000 b=
 b11 a=
-b10000000000000 `=
+b1000 `=
 b1000 _=
-b1101 ^=
+b11 ^=
 b1000000 ]=
 b1000000 \=
 b0 K=
-b10000000000000 ,=
-b10000000000000 +=
-b10000000000000 *=
-b100000000000000 )=
+b1000 ,=
+b1000 +=
+b1000 *=
+b10000 )=
 b1000 (=
-b100000000000000000 '=
-b10000000000000000 &=
-b10000000000000000 %=
-b10000000000000000 $=
+b10000000 '=
+b1000000 &=
+b1000000 %=
+b1000000 $=
 b1000000 #=
 b1000000 "=
 b10 P<
@@ -4601,33 +4601,33 @@ b1000000 1:
 b1000000 0:
 b1000 %:
 b1000000 $:
-b110000 m9
-b10000000000000000 l9
+b111010 m9
+b1000000 l9
 b11 k9
-b10000000000000 j9
+b1000 j9
 b1000 i9
-b1101 h9
+b11 h9
 b1000000 g9
 b1000000 f9
 b1 U9
-b110000 D9
-b10000000000000000 C9
+b111010 D9
+b1000000 C9
 b11 B9
-b10000000000000 A9
+b1000 A9
 b1000 @9
-b1101 ?9
+b11 ?9
 b1000000 >9
 b1000000 =9
 b0 ,9
-b10000000000000 k8
-b10000000000000 j8
-b10000000000000 i8
-b100000000000000 h8
+b1000 k8
+b1000 j8
+b1000 i8
+b10000 h8
 b1000 g8
-b100000000000000000 f8
-b10000000000000000 e8
-b10000000000000000 d8
-b10000000000000000 c8
+b10000000 f8
+b1000000 e8
+b1000000 d8
+b1000000 c8
 b1000000 b8
 b1000000 a8
 b1 18
@@ -4676,48 +4676,48 @@ b1000000 p5
 b1000000 o5
 b1000 d5
 b1000000 c5
-b110000 N5
-b10000000000000000 M5
+b111010 N5
+b1000000 M5
 b11 L5
-b10000000000000 K5
+b1000 K5
 b1000 J5
-b1101 I5
+b11 I5
 b1000000 H5
 b1000000 G5
 b1 65
-b110000 %5
-b10000000000000000 $5
+b111010 %5
+b1000000 $5
 b11 #5
-b10000000000000 "5
+b1000 "5
 b1000 !5
-b1101 ~4
+b11 ~4
 b1000000 }4
 b1000000 |4
 b0 k4
-b10000000000000 L4
-b10000000000000 K4
-b10000000000000 J4
-b100000000000000 I4
+b1000 L4
+b1000 K4
+b1000 J4
+b10000 I4
 b1000 H4
-b100000000000000000 G4
-b10000000000000000 F4
-b10000000000000000 E4
-b10000000000000000 D4
+b10000000 G4
+b1000000 F4
+b1000000 E4
+b1000000 D4
 b1000000 C4
 b1000000 B4
 b0 p3
-b10000000000000000 n3
+b1000000 n3
 b100 m3
 b1000 l3
-b10000000000000000000 k3
+b1000000000 k3
 b1000000 j3
 b1000000 i3
-b101101 E3
-b10000000000000000000 D3
+b110111 E3
+b1000000000 D3
 b11 C3
-b10000000000000000 B3
+b1000000 B3
 b1000 A3
-b10000 @3
+b110 @3
 b1000000 ?3
 b1000000 >3
 b100 (3
@@ -4768,33 +4768,33 @@ b1000000 a0
 b1000000 `0
 b1000 U0
 b1000000 T0
-b110000 ?0
-b10000000000000000 >0
+b111010 ?0
+b1000000 >0
 b11 =0
-b10000000000000 <0
+b1000 <0
 b1000 ;0
-b1101 :0
+b11 :0
 b1000000 90
 b1000000 80
 b1 '0
-b110000 t/
-b10000000000000000 s/
+b111010 t/
+b1000000 s/
 b11 r/
-b10000000000000 q/
+b1000 q/
 b1000 p/
-b1101 o/
+b11 o/
 b1000000 n/
 b1000000 m/
 b0 \/
-b10000000000000 =/
-b10000000000000 </
-b10000000000000 ;/
-b100000000000000 :/
+b1000 =/
+b1000 </
+b1000 ;/
+b10000 :/
 b1000 9/
-b100000000000000000 8/
-b10000000000000000 7/
-b10000000000000000 6/
-b10000000000000000 5/
+b10000000 8/
+b1000000 7/
+b1000000 6/
+b1000000 5/
 b1000000 4/
 b1000000 3/
 b11 a.
@@ -4843,33 +4843,33 @@ b1000000 B,
 b1000000 A,
 b1000 6,
 b1000000 5,
-b110000 ~+
-b10000000000000000 }+
+b111010 ~+
+b1000000 }+
 b11 |+
-b10000000000000 {+
+b1000 {+
 b1000 z+
-b1101 y+
+b11 y+
 b1000000 x+
 b1000000 w+
 b1 f+
-b110000 U+
-b10000000000000000 T+
+b111010 U+
+b1000000 T+
 b11 S+
-b10000000000000 R+
+b1000 R+
 b1000 Q+
-b1101 P+
+b11 P+
 b1000000 O+
 b1000000 N+
 b0 =+
-b10000000000000 |*
-b10000000000000 {*
-b10000000000000 z*
-b100000000000000 y*
+b1000 |*
+b1000 {*
+b1000 z*
+b10000 y*
 b1000 x*
-b100000000000000000 w*
-b10000000000000000 v*
-b10000000000000000 u*
-b10000000000000000 t*
+b10000000 w*
+b1000000 v*
+b1000000 u*
+b1000000 t*
 b1000000 s*
 b1000000 r*
 b10 B*
@@ -4918,33 +4918,33 @@ b1000000 #(
 b1000000 "(
 b1000 u'
 b1000000 t'
-b110000 _'
-b10000000000000000 ^'
+b111010 _'
+b1000000 ^'
 b11 ]'
-b10000000000000 \'
+b1000 \'
 b1000 ['
-b1101 Z'
+b11 Z'
 b1000000 Y'
 b1000000 X'
 b1 G'
-b110000 6'
-b10000000000000000 5'
+b111010 6'
+b1000000 5'
 b11 4'
-b10000000000000 3'
+b1000 3'
 b1000 2'
-b1101 1'
+b11 1'
 b1000000 0'
 b1000000 /'
 b0 |&
-b10000000000000 ]&
-b10000000000000 \&
-b10000000000000 [&
-b100000000000000 Z&
+b1000 ]&
+b1000 \&
+b1000 [&
+b10000 Z&
 b1000 Y&
-b100000000000000000 X&
-b10000000000000000 W&
-b10000000000000000 V&
-b10000000000000000 U&
+b10000000 X&
+b1000000 W&
+b1000000 V&
+b1000000 U&
 b1000000 T&
 b1000000 S&
 b1 #&
@@ -4993,43 +4993,43 @@ b1000000 b#
 b1000000 a#
 b1000 V#
 b1000000 U#
-b110000 @#
-b10000000000000000 ?#
+b111010 @#
+b1000000 ?#
 b11 >#
-b10000000000000 =#
+b1000 =#
 b1000 <#
-b1101 ;#
+b11 ;#
 b1000000 :#
 b1000000 9#
 b1 (#
-b110000 u"
-b10000000000000000 t"
+b111010 u"
+b1000000 t"
 b11 s"
-b10000000000000 r"
+b1000 r"
 b1000 q"
-b1101 p"
+b11 p"
 b1000000 o"
 b1000000 n"
 b0 ]"
-b10000000000000 >"
-b10000000000000 ="
-b10000000000000 <"
-b100000000000000 ;"
+b1000 >"
+b1000 ="
+b1000 <"
+b10000 ;"
 b1000 :"
-b100000000000000000 9"
-b10000000000000000 8"
-b10000000000000000 7"
-b10000000000000000 6"
+b10000000 9"
+b1000000 8"
+b1000000 7"
+b1000000 6"
 b1000000 5"
 b1000000 4"
 b0 b
-b10000000000000000 `
+b1000000 `
 b100 _
 b1000 ^
-b10000000000000000000 ]
+b1000000000 ]
 b1000000 \
 b1000000 [
-b10000000000000000000000 A
+b1000000000000000 A
 b1000000 @
 b1000 ?
 b0 0
@@ -5037,7 +5037,7 @@ b1 /
 b10 .
 b1000 -
 b1000000 ,
-b10000000000000000000000 +
+b1000000000000000 +
 $end
 #0
 $dumpvars
@@ -8955,24 +8955,24 @@ b100010 "&
 b100 v%
 b100010 u$
 b100 k$
-b10000000000000 &#
-b10000000000000 O#
-b10000000000000 E'
-b10000000000000 n'
-b10000000000000 d+
-b10000000000000 /,
-b10000000000000 %0
-b10000000000000 N0
-b10000000000000000 O3
-b10000000000000 45
-b10000000000000 ]5
-b10000000000000 S9
-b10000000000000 |9
-b10000000000000 r=
-b10000000000000 =>
-b10000000000000 3B
-b10000000000000 \B
-b10000000000000000 ]E
+b1000 &#
+b1000 O#
+b1000 E'
+b1000 n'
+b1000 d+
+b1000 /,
+b1000 %0
+b1000 N0
+b1000000 O3
+b1000 45
+b1000 ]5
+b1000 S9
+b1000 |9
+b1000 r=
+b1000 =>
+b1000 3B
+b1000 \B
+b1000000 ]E
 1!
 #10000
 0!
@@ -9017,24 +9017,24 @@ b100010 "&
 b100 v%
 b100010 u$
 b100 k$
-b10000000000000000 ]E
-b10000000000000 \B
-b10000000000000 3B
-b10000000000000 =>
-b10000000000000 r=
-b10000000000000 |9
-b10000000000000 S9
-b10000000000000 ]5
-b10000000000000 45
-b10000000000000000 O3
-b10000000000000 N0
-b10000000000000 %0
-b10000000000000 /,
-b10000000000000 d+
-b10000000000000 n'
-b10000000000000 E'
-b10000000000000 O#
-b10000000000000 &#
+b1000000 ]E
+b1000 \B
+b1000 3B
+b1000 =>
+b1000 r=
+b1000 |9
+b1000 S9
+b1000 ]5
+b1000 45
+b1000000 O3
+b1000 N0
+b1000 %0
+b1000 /,
+b1000 d+
+b1000 n'
+b1000 E'
+b1000 O#
+b1000 &#
 1!
 #20000
 0c.

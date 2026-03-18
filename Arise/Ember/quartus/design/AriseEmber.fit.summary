@@ -1,0 +1,11 @@
+I/O Assignment Analysis Status : Successful - Wed Mar 18 23:54:06 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : AriseEmber
+Top-level Entity Name : cpu
+Family : Cyclone V
+Device : 5CGXFC7C7F23C8
+Timing Models : Final
+Total pins : 2 / 268 ( < 1 % )
+Total virtual pins : 0
+Total PLLs : 0 / 13 ( 0 % )
+Total DLLs : 0 / 4 ( 0 % )

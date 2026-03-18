@@ -23,10 +23,10 @@ module core #(
     input wire mem_hit
 );
     // Cache
-    localparam L1_SIZE = 128*1024;
-    localparam L1I_SIZE = 64*1024;
-    localparam L1D_SIZE = 64*1024;
-    localparam L1ID_SIZE = 64*1024;
+    localparam L1_SIZE = 128; // 128KB in reality (128*1024)
+    localparam L1I_SIZE = 64; // 64KB in reality (64*1024)
+    localparam L1D_SIZE = 64; // 64KB in reality (64*1024)
+    localparam L1ID_SIZE = 64; // 64KB in reality (64*1024)
 
     localparam NUM_LINES = L1_SIZE / LINE_SIZE;
     localparam NUM_LINES_L1I = L1I_SIZE / LINE_SIZE;
@@ -146,14 +146,11 @@ module core #(
     reg t0_imem_hit, t1_imem_hit;
 
     // ALU instantiation
-    reg alu_en;
     reg [7:0] alu_op;
     reg [DATA_W-1:0] alu_a, alu_b;
     reg alu_valid;
     wire [DATA_W-1:0] alu_res;
     wire alu_done;
-    reg [1:0] alu_owner; // 0=none,1=t0,2=t1
-    reg alu_busy;
 
     alu alu_u (
         .clk(clk),
@@ -227,41 +224,47 @@ module core #(
     );
 
     // ALU
+    reg alu_en;
+    reg [1:0] alu_owner; // 0=none,1=t0,2=t1
     reg last_grant; // 0=t0, 1=t1
 
     wire grant_t0_alu = t0_req_alu && (!t1_req_alu || last_grant);
     wire grant_t1_alu = t1_req_alu && (!t0_req_alu || !last_grant);
 
     always @(*) begin
-        alu_en = 0; alu_valid = 0; alu_op = 0;
-        alu_a = 0; alu_b = 0;
-
-        if (!alu_busy) begin
-            if (grant_t0_alu) begin
-                alu_en = 1; alu_valid = t0_alu_valid;
-                alu_op = t0_alu_op; alu_a = t0_alu_a; alu_b = t0_alu_b;
-                alu_owner = 2'b01;
-            end else if (grant_t1_alu) begin
-                alu_en = 1; alu_valid = t1_alu_valid;
-                alu_op = t1_alu_op; alu_a = t1_alu_a; alu_b = t1_alu_b;
-                alu_owner = 2'b10;
-            end
+        if (grant_t0_alu) begin
+            alu_en = 1;
+            alu_valid = t0_alu_valid;
+            alu_op = t0_alu_op; alu_a = t0_alu_a; alu_b = t0_alu_b;
+            alu_owner = 2'b01;
+        end else if (grant_t1_alu) begin
+            alu_en = 1;
+            alu_valid = t1_alu_valid;
+            alu_op = t1_alu_op; alu_a = t1_alu_a; alu_b = t1_alu_b;
+            alu_owner = 2'b10;
+        end else begin
+            alu_en = 0;
+            alu_valid = 0;
+            alu_op = 0;
+            alu_a = 0;
+            alu_b = 0;
+            alu_owner = 2'b00;
         end
     end
 
     always @(posedge clk) begin
         if (rst || core_reset) begin
-            t0_reset <= 1; t1_reset <= 1;
-            alu_busy <= 0; alu_owner <= 0;
+            t0_reset <= 1;
+            t1_reset <= 1;
         end else begin
-            t0_reset <= 0; t1_reset <= 0;
+            t0_reset <= 0;
+            t1_reset <= 0;
             if (alu_owner != 2'b00 && alu_done) begin
                 if (alu_owner == 2'b01) begin
                     t0_alu_res <= alu_res; t0_alu_done <= 1;
                 end else if (alu_owner == 2'b10) begin
                     t1_alu_res <= alu_res; t1_alu_done <= 1;
                 end
-                alu_busy <= 0; alu_owner <= 2'b00;
             end
         end
     end
@@ -347,6 +350,6 @@ module core #(
 
     // Defaults
     initial begin
-        t0_enable = 1; t1_enable = 0; alu_busy = 0; last_grant = 0;
+        t0_enable = 1; t1_enable = 0; last_grant = 0;
     end
 endmodule

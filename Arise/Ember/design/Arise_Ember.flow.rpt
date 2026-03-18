@@ -1,0 +1,113 @@
+Flow report for Arise_Ember
+Wed Mar 18 23:19:17 2026
+Quartus Prime Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Flow Summary
+  3. Flow Settings
+  4. Flow Non-Default Global Settings
+  5. Flow Elapsed Time
+  6. Flow OS Summary
+  7. Flow Log
+  8. Flow Messages
+  9. Flow Suppressed Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 2025  Altera Corporation. All rights reserved.
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and any partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, the Altera Quartus Prime License Agreement,
+the Altera IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Altera and sold by Altera or its authorized distributors.  Please
+refer to the Altera Software License Subscription Agreements 
+on the Quartus Prime software download page.
+
+
+
++-------------------------------------------------------------------------------+
+; Flow Summary                                                                  ;
++-----------------------------+-------------------------------------------------+
+; Flow Status                 ; Flow Failed - Wed Mar 18 23:19:17 2026          ;
+; Quartus Prime Version       ; 25.1std.0 Build 1129 10/21/2025 SC Lite Edition ;
+; Revision Name               ; Arise_Ember                                     ;
+; Top-level Entity Name       ; core                                            ;
+; Family                      ; Cyclone V                                       ;
+; Device                      ; 5CGXFC7C7F23C8                                  ;
+; Timing Models               ; Final                                           ;
+; Logic utilization (in ALMs) ; N/A until Partition Merge                       ;
+; Total registers             ; N/A until Partition Merge                       ;
+; Total pins                  ; N/A until Partition Merge                       ;
+; Total virtual pins          ; N/A until Partition Merge                       ;
+; Total block memory bits     ; N/A until Partition Merge                       ;
+; Total PLLs                  ; N/A until Partition Merge                       ;
+; Total DLLs                  ; N/A until Partition Merge                       ;
++-----------------------------+-------------------------------------------------+
+
+
++-----------------------------------------+
+; Flow Settings                           ;
++-------------------+---------------------+
+; Option            ; Setting             ;
++-------------------+---------------------+
+; Start date & time ; 03/18/2026 23:19:09 ;
+; Main task         ; Compilation         ;
+; Revision Name     ; Arise_Ember         ;
++-------------------+---------------------+
+
+
++-------------------------------------------------------------------------------------------------------------------------+
+; Flow Non-Default Global Settings                                                                                        ;
++-------------------------------------+----------------------------------------+---------------+-------------+------------+
+; Assignment Name                     ; Value                                  ; Default Value ; Entity Name ; Section Id ;
++-------------------------------------+----------------------------------------+---------------+-------------+------------+
+; COMPILER_SIGNATURE_ID               ; 225102422321632.177385614924878        ; --            ; --          ; --         ;
+; FITTER_EFFORT                       ; Fast Fit                               ; Auto Fit      ; --          ; --         ;
+; NUM_PARALLEL_PROCESSORS             ; 1                                      ; --            ; --          ; --         ;
+; PARTITION_COLOR                     ; -- (Not supported for targeted family) ; --            ; core        ; Top        ;
+; PARTITION_FITTER_PRESERVATION_LEVEL ; -- (Not supported for targeted family) ; --            ; core        ; Top        ;
+; PARTITION_NETLIST_TYPE              ; -- (Not supported for targeted family) ; --            ; core        ; Top        ;
+; TOP_LEVEL_ENTITY                    ; core                                   ; Arise_Ember   ; --          ; --         ;
+; VERILOG_INPUT_VERSION               ; SystemVerilog_2005                     ; Verilog_2001  ; --          ; --         ;
++-------------------------------------+----------------------------------------+---------------+-------------+------------+
+
+
++--------------------------------------------------------------------------------------------------------------------------+
+; Flow Elapsed Time                                                                                                        ;
++----------------------+--------------+-------------------------+---------------------+------------------------------------+
+; Module Name          ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
++----------------------+--------------+-------------------------+---------------------+------------------------------------+
+; Analysis & Synthesis ; 00:00:08     ; 1.0                     ; 401 MB              ; 00:00:20                           ;
+; Total                ; 00:00:08     ; --                      ; --                  ; 00:00:20                           ;
++----------------------+--------------+-------------------------+---------------------+------------------------------------+
+
+
++----------------------------------------------------------------------------------------+
+; Flow OS Summary                                                                        ;
++----------------------+----------------------+------------+------------+----------------+
+; Module Name          ; Machine Hostname     ; OS Name    ; OS Version ; Processor type ;
++----------------------+----------------------+------------+------------+----------------+
+; Analysis & Synthesis ; akshudev-hpelitedesk ; Arch Linux ; Arch Linux ; x86_64         ;
++----------------------+----------------------+------------+------------+----------------+
+
+
+------------
+; Flow Log ;
+------------
+quartus_map --read_settings_files=on --write_settings_files=off Arise_Ember -c Arise_Ember
+
+
+
