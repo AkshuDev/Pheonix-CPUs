@@ -49,9 +49,9 @@ module cache_controller #(
         UPDATE // Update cache line and states
     } fsm_state_t;
 
-    reg [TAG_BITS-1:0] tag_array [NUM_LINES];
-    reg [DATA_W-1:0] data_array [NUM_LINES];
-    state_t state [NUM_LINES];
+    (* ramstyle = "M9K" *) reg [DATA_W-1:0] data_array [NUM_LINES];
+    (* ramstyle = "M9K" *) reg [TAG_BITS-1:0] tag_array [NUM_LINES];
+    (* ramstyle = "M9K" *) state_t state [NUM_LINES];
 
     fsm_state_t state_fsm, next_state_fsm;
     wire [INDEX_BITS-1:0] index;
@@ -167,8 +167,6 @@ module cache_controller #(
                         ready <= 1;
                         using_mem <= 0;
                         mem_req <= 0;
-
-                        $display("Cache: Got memory %h", mem_rdata);
 
                         if (reg_rd) state[index] <= E;
                         else if (reg_wr) state[index] <= M;

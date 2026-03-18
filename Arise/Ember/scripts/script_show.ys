@@ -1,0 +1,8 @@
+# Read all modules
+read_verilog -sv cpu.v supercore.v core.v alu.v thread.v regfile.v istate.v decoder.v
+
+# Set top module
+hierarchy -top cpu
+proc; opt
+
+show -prefix yosys/cpu -format dot

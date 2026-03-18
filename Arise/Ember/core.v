@@ -26,28 +26,66 @@ module core #(
     localparam L1_SIZE = 128*1024;
     localparam L1I_SIZE = 64*1024;
     localparam L1D_SIZE = 64*1024;
+    localparam L1ID_SIZE = 64*1024;
 
     localparam NUM_LINES = L1_SIZE / LINE_SIZE;
     localparam NUM_LINES_L1I = L1I_SIZE / LINE_SIZE;
     localparam NUM_LINES_L1D = L1D_SIZE / LINE_SIZE;
+    localparam NUM_LINES_L1ID = L1ID_SIZE / LINE_SIZE;
 
     // Memory Protocol (MOESI)
-    reg l1i_rd_en, l1d_rd_en;
-    reg l1i_wr_en, l1d_wr_en;
-    reg [ADDR_W-1:0] l1i_addr, l1d_addr;
-    reg [DATA_W-1:0] l1i_wr_data, l1d_wr_data;
-    wire [DATA_W-1:0] l1i_rd_data, l1d_rd_data;
-    wire l1i_hit, l1d_hit;
-    wire l1i_ready, l1d_ready;
+    reg [1:0] l1_rd_en;
+    reg [1:0] l1_wr_en;
+    reg [ADDR_W-1:0] l1_addr [1:0];
+    reg [DATA_W-1:0] l1_wr_data [1:0];
+    wire [DATA_W-1:0] l1_rd_data [1:0];
+    wire [1:0] l1_hit;
+    wire [1:0] l1_ready;
 
-    wire l1i_using_mem, l1d_using_mem;
+    wire [1:0] l1_using_mem;
 
-    wire l1i_mem_req, l1d_mem_req;
-    wire l1i_mem_wr, l1d_mem_wr;
-    wire [ADDR_W-1:0] l1i_mem_addr, l1d_mem_addr;
-    wire [DATA_W-1:0] l1i_mem_wdata, l1d_mem_wdata;
-    wire [DATA_W-1:0] l1i_mem_rdata, l1d_mem_rdata;
-    wire l1i_mem_hit, l1d_mem_ready;
+    wire [1:0] l1_mem_req;
+    wire [1:0] l1_mem_wr;
+    wire [ADDR_W-1:0] l1_mem_addr [1:0];
+    wire [DATA_W-1:0] l1_mem_wdata [1:0];
+    wire [DATA_W-1:0] l1_mem_rdata [1:0];
+    wire [1:0] l1_mem_hit;
+    wire [1:0] l1_mem_ready;
+
+    genvar i;
+    generate
+        for (i = 0; i < 2; i = i+1) begin : cachs
+            cache_controller #(
+                .DATA_W(DATA_W),
+                .ADDR_W(ADDR_W),
+                .NUM_LINES(NUM_LINES_L1ID),
+                .LINE_SIZE(LINE_SIZE),
+                .SIZE(L1ID_SIZE)
+            ) l1 (
+                .clk(clk),
+                .rst(rst),
+                
+                .rd_en(l1_rd_en[i]),
+                .wr_en(l1_wr_en[i]),
+                .addr(l1_addr[i]),
+                .wr_data(l1_wr_data[i]),
+                .rd_data(l1_rd_data[i]),
+                .hit(l1_hit[i]),
+                .ready(l1_ready[i]),
+
+                .using_mem(l1_using_mem[i]),
+                .mem_in_use(i == 0 ? l1_using_mem[1] : l1_using_mem[0]),
+                
+                .mem_req(l1_mem_req[i]),
+                .mem_wr(l1_mem_wr[i]),
+                .mem_addr(l1_mem_addr[i]),
+                .mem_wdata(l1_mem_wdata[i]),
+                .mem_rdata(l1_mem_rdata[i]),
+                .mem_ready(l1_mem_ready[i]),
+                .mem_hit(l1_mem_hit[i])
+            );
+        end
+    endgenerate
 
     mem_arbiter #(
         .NUM_CORES(2),
@@ -56,14 +94,14 @@ module core #(
     ) arbiter (
         .clk(clk),
         .rst(rst),
-        
-        .req({l1i_mem_req, l1d_mem_req}),
-        .wr({l1i_mem_wr, l1d_mem_wr}),
-        .addr({l1i_mem_addr, l1d_mem_addr}),
-        .wdata({l1i_mem_wdata, l1d_mem_wdata}),
-        .rdata({l1i_mem_rdata, l1d_mem_rdata}),
-        .hit({l1i_mem_hit, l1d_mem_hit}),
-        .ready({l1i_mem_ready, l1d_mem_ready}),
+
+        .req(l1_mem_req),
+        .wr(l1_mem_wr),
+        .addr(l1_mem_addr),
+        .wdata(l1_mem_wdata),
+        .rdata(l1_mem_rdata),
+        .hit(l1_mem_hit),
+        .ready(l1_mem_ready),
         
         .mem_ready(mem_ready),
         .mem_hit(mem_hit),
@@ -74,66 +112,6 @@ module core #(
         .mem_wdata(mem_wdata),
         .mem_rdata(mem_rdata),
         .granted_core()
-    );
-
-    cache_controller #(
-        .DATA_W(DATA_W),
-        .ADDR_W(ADDR_W),
-        .NUM_LINES(NUM_LINES_L1I),
-        .LINE_SIZE(LINE_SIZE),
-        .SIZE(L1I_SIZE)
-    ) l1i (
-        .clk(clk),
-        .rst(rst),
-        
-        .rd_en(l1i_rd_en),
-        .wr_en(l1i_wr_en),
-        .addr(l1i_addr),
-        .wr_data(l1i_wr_data),
-        .rd_data(l1i_rd_data),
-        .hit(l1i_hit),
-        .ready(l1i_ready),
-
-        .using_mem(l1i_using_mem),
-        .mem_in_use(l1d_using_mem),
-        
-        .mem_req(l1i_mem_req),
-        .mem_wr(l1i_mem_wr),
-        .mem_addr(l1i_mem_addr),
-        .mem_wdata(l1i_mem_wdata),
-        .mem_rdata(l1i_mem_rdata),
-        .mem_ready(l1i_mem_ready),
-        .mem_hit(l1i_mem_hit)
-    );
-
-    cache_controller #(
-        .DATA_W(DATA_W),
-        .ADDR_W(ADDR_W),
-        .NUM_LINES(NUM_LINES_L1D),
-        .LINE_SIZE(LINE_SIZE),
-        .SIZE(L1D_SIZE)
-    ) l1d (
-        .clk(clk),
-        .rst(rst),
-        
-        .rd_en(l1d_rd_en),
-        .wr_en(l1d_wr_en),
-        .addr(l1d_addr),
-        .wr_data(l1d_wr_data),
-        .rd_data(l1d_rd_data),
-        .hit(l1d_hit),
-        .ready(l1d_ready),
-        
-        .using_mem(l1d_using_mem),
-        .mem_in_use(l1i_using_mem),
-
-        .mem_req(l1d_mem_req),
-        .mem_wr(l1d_mem_wr),
-        .mem_addr(l1d_mem_addr),
-        .mem_wdata(l1d_mem_wdata),
-        .mem_rdata(l1d_mem_rdata),
-        .mem_ready(l1d_mem_ready),
-        .mem_hit(l1d_mem_hit)
     );
 
     // Threads
@@ -290,36 +268,38 @@ module core #(
 
     // Memory stuff
     always @(*) begin
-        l1i_addr = {DATA_W{1'b0}};
-        l1i_rd_en = 0; l1i_wr_en = 0;
-        l1d_addr = {DATA_W{1'b0}};
-        l1d_rd_en = 0; l1d_wr_en = 0;
-        l1d_wr_data = {DATA_W{1'b0}};
+        l1_addr[0] = {DATA_W{1'b0}};
+        l1_rd_en[0] = 0;
+        l1_wr_en[0] = 0;
+        l1_addr[1] = {DATA_W{1'b0}};
+        l1_rd_en[1] = 0;
+        l1_wr_en[1] = 0;
+        l1_wr_data[1] = {DATA_W{1'b0}};
 
         if (t0_mem_wr) begin
-            l1d_addr = t0_mem_addr;
-            l1d_wr_data = t0_mem_wdata;
-            l1d_wr_en = 1;
+            l1_addr[1] = t0_mem_addr;
+            l1_wr_data[1] = t0_mem_wdata;
+            l1_wr_en[1] = 1;
         end else if (t1_mem_wr) begin
-            l1d_addr = t1_mem_addr;
-            l1d_wr_data = t1_mem_wdata;
-            l1d_wr_en = 1;
+            l1_addr[1] = t1_mem_addr;
+            l1_wr_data[1] = t1_mem_wdata;
+            l1_wr_en[1] = 1;
         end
 
         else if (t0_req_mem) begin
-            l1d_addr = t0_mem_addr;
-            l1d_rd_en = 1;
+            l1_addr[1] = t0_mem_addr;
+            l1_rd_en[1] = 1;
         end else if (t1_req_mem) begin
-            l1d_addr = t1_mem_addr;
-            l1d_rd_en = 1;
+            l1_addr[1] = t1_mem_addr;
+            l1_rd_en[1] = 1;
         end
 
         else if (t0_req_imem) begin
-            l1i_addr = t0_imem_addr;
-            l1i_rd_en = 1;
+            l1_addr[0] = t0_imem_addr;
+            l1_rd_en[0] = 1;
         end else if (t1_req_imem) begin
-            l1i_addr = t1_imem_addr;
-            l1i_rd_en = 1;
+            l1_addr[0] = t1_imem_addr;
+            l1_rd_en[0] = 1;
         end
     end
 
@@ -336,29 +316,29 @@ module core #(
             t1_mem_rdata <= {DATA_W{1'b0}};
         end else begin
             // Instruction fetch
-            t0_imem_ready <= t0_req_imem & l1i_ready;
-            t0_imem_hit <= t0_req_imem & l1i_ready;
-            t0_imem_rdata <= l1i_rd_data;
+            t0_imem_ready <= t0_req_imem & l1_ready[0];
+            t0_imem_hit <= t0_req_imem & l1_ready[0];
+            t0_imem_rdata <= l1_rd_data[0];
 
-            t1_imem_ready <= t1_req_imem & l1i_ready;
-            t1_imem_hit <= t1_req_imem & l1i_ready;
-            t1_imem_rdata <= l1i_rd_data;
+            t1_imem_ready <= t1_req_imem & l1_ready[0];
+            t1_imem_hit <= t1_req_imem & l1_ready[0];
+            t1_imem_rdata <= l1_rd_data[0];
 
             // Data read
-            t0_mem_ready <= t0_req_mem & l1d_ready;
-            t0_mem_hit <= t0_req_mem & l1d_ready;
-            t0_mem_rdata <= l1d_rd_data;
+            t0_mem_ready <= t0_req_mem & l1_ready[1];
+            t0_mem_hit <= t0_req_mem & l1_ready[1];
+            t0_mem_rdata <= l1_rd_data[1];
 
-            t1_mem_ready <= t1_req_mem & l1d_ready;
-            t1_mem_hit <= t1_req_mem & l1d_ready;
-            t1_mem_rdata <= l1d_rd_data;
+            t1_mem_ready <= t1_req_mem & l1_ready[1];
+            t1_mem_hit <= t1_req_mem & l1_ready[1];
+            t1_mem_rdata <= l1_rd_data[1];
 
             // Data write
-            if (t0_mem_wr & l1d_ready) begin
+            if (t0_mem_wr & l1_ready[1]) begin
                 t0_mem_ready <= 1;
                 t0_mem_hit <= 0; // writes don't count as hits
             end
-            if (t1_mem_wr & l1d_ready) begin
+            if (t1_mem_wr & l1_ready[1]) begin
                 t1_mem_ready <= 1;
                 t1_mem_hit <= 0;
             end

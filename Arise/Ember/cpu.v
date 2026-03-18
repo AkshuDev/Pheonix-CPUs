@@ -106,7 +106,6 @@ module cpu (
                         if (grant_which_sc == 0) begin
                             sc0_rdata <= l3_rdata;
                             sc0_ready <= 1'b1;
-                            $display("Granting %h (CPU)", l3_rdata);
                         end else begin
                             sc1_rdata <= l3_rdata;
                             sc1_ready <= 1'b1;

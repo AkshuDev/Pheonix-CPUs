@@ -101,21 +101,6 @@ module supercore #(
         .mem_hit(mem_hit)
     );
 
-    wire [ADDR_W*NUM_CORES-1:0] arb_addr;
-    wire [DATA_W*NUM_CORES-1:0] arb_wdata;
-    wire [DATA_W*NUM_CORES-1:0] arb_rdata;
-    wire [NUM_CORES-1:0] arb_ready;
-    wire [NUM_CORES-1:0] arb_hit;
-
-    genvar j;
-    generate
-        for (j = 0; j < NUM_CORES; j = j + 1) begin : flatten
-            assign arb_addr[ADDR_W*(j+1)-1 -: ADDR_W] = l1_addr[j];
-            assign arb_wdata[DATA_W*(j+1)-1 -: DATA_W] = l1_wdata[j];
-            assign arb_rdata[DATA_W*(j+1)-1 -: DATA_W] = l1_rdata[j];
-        end
-    endgenerate
-
     reg l2_req, l2_wr;
     reg [$clog2(NUM_CORES)-1:0] granted_core;
     mem_arbiter #(
@@ -128,9 +113,9 @@ module supercore #(
         
         .req(l1_req),
         .wr(l1_wr),
-        .addr(arb_addr),
-        .wdata(arb_wdata),
-        .rdata(arb_rdata),
+        .addr(l1_addr),
+        .wdata(l1_wdata),
+        .rdata(l1_rdata),
         .hit(l1_hit),
         .ready(l1_ready),
 
@@ -146,21 +131,6 @@ module supercore #(
 
     assign l2_rd_en = l2_req && !l2_wr;
     assign l2_wr_en = l2_req && l2_wr;
-
-    genvar k;
-    generate
-        for (k = 0; k < NUM_CORES; k = k + 1) begin : unflatten
-            assign l1_rdata[k] = arb_rdata[DATA_W*(k+1)-1 -: DATA_W];
-        end
-    endgenerate
-
-    genvar m;
-    generate
-        for (m = 0; m < NUM_CORES; m = m + 1) begin : assign_ready_hit
-            assign l1_ready[m] = arb_ready[m];
-            assign l1_hit[m] = arb_hit[m];
-        end
-    endgenerate
 
     // Initialize: enable only core 0
     initial begin

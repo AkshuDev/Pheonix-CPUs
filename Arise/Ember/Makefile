@@ -9,7 +9,7 @@ IVERILOG := iverilog
 VERILOG_FLAGS := -g 2012
 OUTPUT := obj/cpu_t
 
-.PHONY: all clean
+.PHONY: all clean show_yosys
 
 all: $(OUTPUT)
 
@@ -21,4 +21,13 @@ $(OUTPUT): $(SRCS)
 clean:
 	@echo "Cleaning..."
 	rm -rf $(OUTPUT)
+	@echo "Done!"
+
+show_yosys:
+	@echo "Running YOSYS Synthesis"
+	@mkdir -p yosys
+
+	yosys scripts/script_show.ys
+	dot -Tpdf yosys/cpu.dot -o yosys/cpu.pdf
+
 	@echo "Done!"

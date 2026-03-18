@@ -9,10 +9,10 @@ module mem_arbiter #(
     input wire rst,
     
     input wire [NUM_CORES-1:0] req, // core requests
-    input wire [NUM_CORES-1:0] wr,  // core write flags
-    input wire [ADDR_W*NUM_CORES-1:0] addr, // concatenated addresses
-    input wire [DATA_W*NUM_CORES-1:0] wdata, // concatenated write data
-    output reg [DATA_W*NUM_CORES-1:0] rdata,
+    input wire [NUM_CORES-1:0] wr, // core write flags
+    input wire [ADDR_W-1:0] addr [NUM_CORES-1:0], // addresses
+    input wire [DATA_W-1:0] wdata [NUM_CORES-1:0], // concatenated write data
+    output reg [DATA_W-1:0] rdata [NUM_CORES-1:0],
     output reg [NUM_CORES-1:0] hit,
     output reg [NUM_CORES-1:0] ready,
     
@@ -30,6 +30,7 @@ module mem_arbiter #(
     reg granted;
 
     reg active;
+    reg found;
     integer i, idx;
 
     always @(posedge clk) begin
@@ -50,21 +51,28 @@ module mem_arbiter #(
                         granted_core <= idx;
                         mem_req <= 1;
                         mem_wr <= wr[idx];
-                        mem_addr <= addr[ADDR_W*(idx+1)-1 -: ADDR_W];
-                        mem_wdata <= wdata[DATA_W*(idx+1)-1 -: DATA_W];
+                        mem_addr <= addr[idx];
+                        mem_wdata <= wdata[idx];
                         active <= 1;
                         last_grant <= idx;
                     end
                 end
             end else begin
+                if (found) begin
+                    if (req[granted_core]) begin
+                        active <= 0;
+                        found <= 0;
+                        ready[granted_core] <= 0;
+                        hit[granted_core] <= 0;
+                    end
+                end
                 // wait until memory ready
-                if (mem_ready) begin
-                    active <= 0;
-                    rdata[DATA_W*(granted_core+1)-1 -: DATA_W] <= mem_rdata;
+                else if (mem_ready) begin
+                    rdata[granted_core] <= mem_rdata;
                     ready[granted_core] <= 1;
                     hit[granted_core] <= mem_hit;
                     mem_req <= 0;
-                    $display("Granting %h to %d", mem_rdata, granted_core);
+                    found <= 1;
                 end else begin
                     mem_req <= 1;
                 end
