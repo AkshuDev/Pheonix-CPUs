@@ -1,6 +1,9 @@
 # Pheonix-CPUs
 All of Pheonix CPU Designs
 
+## Site
+Please visit [Pheonix CPUs](https://pheonix-studios-git.github.io/Pheonix-Studios/pages/cpu.html) page at [Pheonix Studios](https://pheonix-studios-git.github.io/Pheonix-Studios) website
+
 # Architecture
 All Pheonix CPUs follow a version of PVCpu (Pheonix Virtual Cpu) Architecture.
 
@@ -10,6 +13,8 @@ Arise Series Includes
 #### Ember
 The First CPU Design
 
+##### Site
+Please visit [Arise Ember](https://pheonix-studios-git.github.io/Pheonix-Studios/pages/cpu_info.html?cpu-key=arise-ember) page at [Pheonix Studios](https://pheonix-studios-git.github.io/Pheonix-Studios) website
 ##### Information
 Under Development
 
