@@ -30,7 +30,7 @@ module mem_arbiter #(
     reg granted;
 
     reg active;
-    reg found;
+    reg found_core;
     integer i, idx;
 
     always @(posedge clk) begin
@@ -42,12 +42,16 @@ module mem_arbiter #(
             granted_core <= 0;
             last_grant <= 0;
             active <= 0;
+            for (i=0;i<NUM_CORES;i=i+1) begin
+                ready[i] <= 0;
+                hit[i] <= 0;
+            end
         end else begin
             if (!active) begin
-                // find next requesting core
-                for (i = 1; i <= NUM_CORES; i = i+1) begin
+                found_core = 0;
+                for (i = 1; i <= NUM_CORES; i=i+1) begin
                     idx = (last_grant + i) % NUM_CORES;
-                    if (req[idx]) begin
+                    if (req[idx] && !found_core) begin
                         granted_core <= idx;
                         mem_req <= 1;
                         mem_wr <= wr[idx];
@@ -55,26 +59,16 @@ module mem_arbiter #(
                         mem_wdata <= wdata[idx];
                         active <= 1;
                         last_grant <= idx;
+                        found_core = 1;
                     end
                 end
             end else begin
-                if (found) begin
-                    if (req[granted_core]) begin
-                        active <= 0;
-                        found <= 0;
-                        ready[granted_core] <= 0;
-                        hit[granted_core] <= 0;
-                    end
-                end
-                // wait until memory ready
-                else if (mem_ready) begin
+                if (mem_ready) begin
                     rdata[granted_core] <= mem_rdata;
                     ready[granted_core] <= 1;
                     hit[granted_core] <= mem_hit;
                     mem_req <= 0;
-                    found <= 1;
-                end else begin
-                    mem_req <= 1;
+                    active <= 0;
                 end
             end
         end

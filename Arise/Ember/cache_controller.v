@@ -4,7 +4,7 @@ module cache_controller #(
     parameter DATA_W = 64,
     parameter ADDR_W = 64,
     parameter NUM_LINES = 1024,
-    parameter SIZE = 8192,
+    parameter SIZE = 65536,
     parameter LINE_SIZE = 8
 ) (
     // Basic

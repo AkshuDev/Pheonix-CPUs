@@ -22,15 +22,11 @@ module tb_cpu;
         rst = 1'b0;
 
         // Load a test instruction into L3 memory
-        // MOV G1, #1 ; MOV G2, #2
-        uut.l3.mem[0] = 8'h15; // least significant byte first
-        uut.l3.mem[1] = 8'h01;
-        uut.l3.mem[2] = 8'h02;
-        uut.l3.mem[3] = 8'h00;
-        uut.l3.mem[4] = 8'h15;
-        uut.l3.mem[5] = 8'h03;
-        uut.l3.mem[6] = 8'h04;
-        uut.l3.mem[7] = 8'h00;
+        // MOV G1, #1
+        uut.l3.mem[3] = 8'b00010001; // LSB, Opcode [0:7] (0:7)
+        uut.l3.mem[2] = 8'b01010010; // Opcode [8:11] + Mode [0:3] (8:15)
+        uut.l3.mem[1] = 8'b00001000; // RSrc [0:5] + RDst [0:1] (16:23)
+        uut.l3.mem[0] = 8'b00010001; // MSB, RDst [2:5] + Flags [0:3] (24:31)
 
         $display("RESET DEASSERTED, PROGRAM LOADED");
 

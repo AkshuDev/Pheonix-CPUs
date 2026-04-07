@@ -4,7 +4,7 @@ module thread #(
     DATA_W = 64,
     ADDR_W = 64,
     INST_W = 32,
-    LINE_SIZE = 8
+    LINE_SIZE = 64
 ) (
     input wire clk,
     input wire rst,
@@ -244,13 +244,26 @@ module thread #(
                         alu_valid <= 1'b1;
                     end else if (opcode == 12'h115) begin
                         // MOV
-                        rf_wr_en <= 1'b1;
-                        rf_wr_addr <= rdest;
-                        if (mode == 4'h1) rf_wr_data <= rf_rd1_data;
-                        else if (mode == 4'h2) rf_wr_data <= {58'd0, rsrc};
-                        else if (mode == 4'h3) rf_wr_data <= imm64;
-                        else if (mode == 4'h4) rf_wr_data <= disp64 + pc;
-                        else invalid_inst <= 1'b1;
+                        if (mode == 4'h1) begin // REG_REG
+                            rf_rd1_addr <= rsrc; // Execute P2 will set value
+                        end else if (mode == 4'h2) begin // REG_IMM
+                            rf_wr_en <= 1'b1;
+                            rf_wr_addr <= rdest;
+                            rf_wr_data <= {58'd0, rsrc};
+                        end else if (mode == 4'h3) begin // REG_EXTIMM
+                        end else if (mode == 4'h4) begin // REG_DISP
+                        end else if (mode == 4'h5) begin // LOAD_REGADDR
+                        end else if (mode == 4'h6) begin // LOAD_IMMADDR
+                        end else if (mode == 4'h7) begin // LOAD_PC_REL
+                        end else if (mode == 4'h8) begin // STORE_REGADDR
+                        end else if (mode == 4'h9) begin // STORE_IMMADDR
+                        end else if (mode == 4'hA) begin // STORE_PC_REL
+                        end else if (mode == 4'hB) begin // SRC_REG
+                        end else if (mode == 4'hC) begin // SRC_REG_IMM
+                        end else if (mode == 4'hD) begin // SRC_IMM
+                        end else begin
+                            invalid_inst <= 1'b1;
+                        end
                     end else begin
                         invalid_inst <= 1'b1;
                     end
@@ -262,6 +275,14 @@ module thread #(
                         rf_wr_addr <= rdest;
                         rf_wr_data <= alu_res;
                         using_alu <= 0;
+                    end
+
+                    if (opcode == 12'h115) begin
+                        if (mode == 4'h1) begin
+                            rf_wr_en <= 1'b1;
+                            rf_wr_addr <= rdest;
+                            rf_wr_data <= rf_rd1_data;
+                        end
                     end
                 end
 
