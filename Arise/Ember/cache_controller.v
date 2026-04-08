@@ -20,6 +20,9 @@ module cache_controller #(
     output reg hit,
     output reg ready,
 
+    input wire invalidate,
+    input wire [ADDR_W-1:0] invalidate_addr,
+
     // Cooporation
     input wire mem_in_use, // Memory being used by coorporative controller
     output reg using_mem, // Memory beging used by this controller
@@ -123,6 +126,9 @@ module cache_controller #(
                         reg_wdata <= wr_data;
                         reg_rd <= rd_en;
                         reg_wr <= wr_en;
+                    end else if (invalidate) begin
+                        state[invalidate_addr[OFFSET_BITS+INDEX_BITS-1:OFFSET_BITS]] <= I;
+                        ready <= 1;
                     end
                 end
 

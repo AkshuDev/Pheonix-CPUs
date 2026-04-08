@@ -1,7 +1,7 @@
 SRCS := cpu_t.v \
 		cpu.v \
 		supercore.v \
-		core.v \
+		cache_directory.v core.v \
 		mem_arbiter.v alu.v cache_controller.v thread.v \
 		regfile.v decoder.v istate.v mem.v
 

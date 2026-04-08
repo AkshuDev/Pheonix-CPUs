@@ -153,6 +153,8 @@ module thread #(
     reg invalid_inst;
     reg using_alu;
 
+    reg next_execute_phase;
+
     // FSM Sequential
     always @(posedge clk) begin
         if (rst || thread_reset) begin
@@ -166,7 +168,7 @@ module thread #(
             alu_valid <= 0;
             using_alu <= 0;
             rf_wr_en <= 0;
-            write_pc <= 1'b1;
+            write_pc <= 1;
             pc_wr_data <= 0;
         end else begin
             state <= next_state;
@@ -176,6 +178,7 @@ module thread #(
             alu_en <= 0;
             alu_valid <= 0;
             write_pc <= 0;
+            next_execute_phase <= 0;
 
             case (state)
                 ST_IDLE: begin
@@ -242,10 +245,12 @@ module thread #(
                         end
                         alu_en <= 1'b1;
                         alu_valid <= 1'b1;
+                        next_execute_phase <= 1;
                     end else if (opcode == 12'h115) begin
                         // MOV
                         if (mode == 4'h1) begin // REG_REG
                             rf_rd1_addr <= rsrc; // Execute P2 will set value
+                            next_execute_phase <= 1;
                         end else if (mode == 4'h2) begin // REG_IMM
                             rf_wr_en <= 1'b1;
                             rf_wr_addr <= rdest;
@@ -284,6 +289,8 @@ module thread #(
                             rf_wr_data <= rf_rd1_data;
                         end
                     end
+
+                    $display("Finished Executing!");
                 end
 
                 ST_LOCKED: begin
@@ -324,7 +331,7 @@ module thread #(
                     next_state = ST_LOCKED;
 
             ST_EXECUTE:
-                next_state = ST_EXECUTE_P2;
+                next_state = next_execute_phase ? ST_EXECUTE_P2 : ST_FETCH;
 
             ST_EXECUTE_P2:
                 if (!using_alu || alu_done)

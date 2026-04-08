@@ -20,7 +20,9 @@ module core #(
     output reg mem_wr,
     input wire [DATA_W-1:0] mem_rdata,
     input wire mem_ready,
-    input wire mem_hit
+    input wire mem_hit,
+    input wire mem_invalidate,
+    input wire [ADDR_W-1:0] mem_invalidate_addr
 );
     // Cache
     localparam L1_SIZE = 128; // 128KB in reality (128*1024)
@@ -82,7 +84,10 @@ module core #(
                 .mem_wdata(l1_mem_wdata[i]),
                 .mem_rdata(l1_mem_rdata[i]),
                 .mem_ready(l1_mem_ready[i]),
-                .mem_hit(l1_mem_hit[i])
+                .mem_hit(l1_mem_hit[i]),
+
+                .invalidate(mem_invalidate),
+                .invalidate_addr(mem_invalidate_addr)
             );
         end
     endgenerate

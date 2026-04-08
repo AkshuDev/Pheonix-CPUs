@@ -31,9 +31,11 @@ module supercore #(
     wire [NUM_CORES-1:0] l1_wr;
     wire [ADDR_W-1:0] l1_addr [NUM_CORES-1:0];
     wire [DATA_W-1:0] l1_wdata [NUM_CORES-1:0];
-    wire [DATA_W-1:0] l1_rdata [NUM_CORES-1:0];
-    wire [NUM_CORES-1:0] l1_ready;
-    wire [NUM_CORES-1:0] l1_hit;
+    reg [DATA_W-1:0] l1_rdata [NUM_CORES-1:0];
+    reg [NUM_CORES-1:0] l1_ready;
+    reg [NUM_CORES-1:0] l1_hit;
+    reg [NUM_CORES-1:0] l1_invalidate;
+    reg [ADDR_W-1:0] l1_invalidate_addr [NUM_CORES-1:0];
 
     // Instantiate cores
     genvar i;
@@ -56,7 +58,10 @@ module supercore #(
                 .mem_wdata(l1_wdata[i]),
                 .mem_wr(l1_wr[i]),
                 .mem_rdata(l1_rdata[i]),
-                .mem_ready(l1_ready[i])
+                .mem_ready(l1_ready[i]),
+
+                .mem_invalidate(l1_invalidate[i]),
+                .mem_invalidate_addr(l1_invalidate_addr[i])
             );
         end
     endgenerate
@@ -101,33 +106,93 @@ module supercore #(
         .mem_hit(mem_hit)
     );
 
-    reg l2_req, l2_wr;
-    reg [$clog2(NUM_CORES)-1:0] granted_core;
-    mem_arbiter #(
-        .NUM_CORES(NUM_CORES),
+    reg req_valid;
+    reg req_wr;
+    reg [ADDR_W-1:0] req_addr;
+    reg [$clog2(NUM_CORES)-1:0] req_core;
+
+    wire grant;
+    wire invalidate;
+    wire [NUM_CORES-1:0] inval_mask;
+    reg [NUM_CORES-1:0] inval_ack;
+    wire [ADDR_W-1:0] inval_addr;
+
+    cache_directory #(
+        .DATA_W(DATA_W),
         .ADDR_W(ADDR_W),
-        .DATA_W(DATA_W)
-    ) arbiter (
+        .NUM_LINES(NUM_LINES),
+        .LINE_SIZE(LINE_SIZE),
+        .CORE_COUNT(NUM_CORES)
+    ) cdir (
         .clk(clk),
         .rst(rst),
-        
-        .req(l1_req),
-        .wr(l1_wr),
-        .addr(l1_addr),
-        .wdata(l1_wdata),
-        .rdata(l1_rdata),
-        .hit(l1_hit),
-        .ready(l1_ready),
 
-        .mem_ready(l2_ready),
+        .req_valid(req_valid),
+        .req_wr(req_wr),
+        .req_core(req_core),
+        .req_addr(req_addr),
+        
+        .grant(grant),
+        .invalidate(invalidate),
+        .inval_mask(inval_mask),
+        .inval_ack(inval_ack),
+        .inval_addr(inval_addr),
         
         .mem_req(l2_req),
         .mem_wr(l2_wr),
         .mem_addr(l2_addr),
-        .mem_rdata(l2_rd_data),
         .mem_wdata(l2_wr_data),
-        .granted_core(granted_core)
+        .mem_rdata(l2_rd_data),
+        .mem_ready(l2_ready),
+        .mem_hit(l2_hit)
     );
+
+    int j;
+    int granting;
+    reg found;
+    always @(*) begin
+        req_valid = 0;
+        req_wr = 0;
+        req_addr = 0;
+        req_core = 0;
+        found = 0;
+        granting = 0;
+        for (j = 0; j < NUM_CORES; j = j + 1) begin
+            if (l1_req[j] && !found) begin
+                req_core = j;
+                req_valid = l1_req[j];
+                req_wr = l1_wr[j];
+                req_addr = l1_addr[j];
+                found = 1;
+                granting = j;
+            end
+        end
+    end
+
+    always @(*) begin
+        l1_ready = 0;
+        l1_hit = 0;
+        for (j = 0; j < NUM_CORES; j = j + 1) begin
+            l1_rdata[j] = 0;
+            l1_invalidate[j] = 0;
+        end
+
+        if (found && grant) begin
+            l1_ready[granting] = 1;
+            l1_hit[granting] = l1_wr[granting] ? 0 : 1;
+            if (!l1_wr[granting]) begin
+                l1_rdata[granting] = l2_rd_data;
+            end
+
+            if (invalidate && (inval_mask[granting])) begin
+                l1_invalidate[granting] = 1;
+                l1_invalidate_addr[granting] = inval_addr;
+                inval_ack[granting] = 1;
+            end else begin
+                inval_ack[granting] <= 0;
+            end
+        end
+    end
 
     assign l2_rd_en = l2_req && !l2_wr;
     assign l2_wr_en = l2_req && l2_wr;
