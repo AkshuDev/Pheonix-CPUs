@@ -30,7 +30,8 @@ module decoder #(
     input wire rst
 );  
     reg waiting;
-    reg [5:0] waiting_bitmask; // 0=IMM, 1=DISP, 2=EXT, (more will be added)
+    reg b64;
+    reg [5:0] waiting_bitmask; // 0=IMM, 1=EXT, (more will be added)
     always @(posedge clk) begin
         if (rst) begin
             waiting_bitmask <= 0;
@@ -45,13 +46,17 @@ module decoder #(
                 if (waiting_bitmask != 0) begin
                     if (waiting_bitmask[0] == 1'b1) begin
                         waiting_bitmask[0] <= 1'b0;
-                        imm <= data;
+                        if (b64)
+                            imm <= data;
+                        else
+                            imm <= data[31:0];
                     end else if (waiting_bitmask[1] == 1'b1) begin
                         waiting_bitmask[1] <= 1'b0;
-                        disp <= data;
-                    end else if (waiting_bitmask[2] == 1'b1) begin
-                        waiting_bitmask[2] <= 1'b0;
                         ext <= data;
+                        if (b64)
+                            ext <= data;
+                        else
+                            ext <= data[31:0];
                     end
                 end else begin
                     waiting <= 0;
@@ -64,17 +69,16 @@ module decoder #(
                 rdest <= inst[9:4];
                 flags <= inst[3:0];
 
-                if (flags[1] == 1) begin
+                if (flags[1] == 1) begin // 64-bit
+                    b64 <= 1;
+                end
+                if (flags[2] == 1) begin // Imm/Disp
                     waiting <= 1;
                     waiting_bitmask[0] <= 1'b1;
                 end
-                if (flags[2] == 1) begin
+                if (flags[3] == 1) begin // Extended Flags
                     waiting <= 1;
                     waiting_bitmask[1] <= 1'b1;
-                end
-                if (flags[3] == 1) begin
-                    waiting <= 1;
-                    waiting_bitmask[2] <= 1'b1;
                 end
 
                 if (flags[1] == 0 && flags[2] == 0 && flags[3] == 0) begin

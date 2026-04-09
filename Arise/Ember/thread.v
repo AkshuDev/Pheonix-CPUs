@@ -213,9 +213,6 @@ module thread #(
 
                 ST_DECODE: begin
                     // Wait for decoder valid
-                    if (decoded_valid && inst_valid) begin
-                        inst_valid <= 0;
-                    end
                 end
 
                 ST_VERIFY: begin
