@@ -1,9 +1,9 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module core #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter ADDR_W = 64,
-    parameter LINE_SIZE = 8
+    parameter LINE_SIZE = 64
 )(
     input wire clk,
     input wire rst,
@@ -25,10 +25,10 @@ module core #(
     input wire [ADDR_W-1:0] mem_invalidate_addr
 );
     // Cache
-    localparam L1_SIZE = 128; // 128KB in reality (128*1024)
-    localparam L1I_SIZE = 64; // 64KB in reality (64*1024)
-    localparam L1D_SIZE = 64; // 64KB in reality (64*1024)
-    localparam L1ID_SIZE = 64; // 64KB in reality (64*1024)
+    localparam L1_SIZE = 512; // 128KB in reality (128*1024)
+    localparam L1I_SIZE = 256; // 64KB in reality (64*1024)
+    localparam L1D_SIZE = 256; // 64KB in reality (64*1024)
+    localparam L1ID_SIZE = 256; // 64KB in reality (64*1024)
 
     localparam NUM_LINES = L1_SIZE / LINE_SIZE;
     localparam NUM_LINES_L1I = L1I_SIZE / LINE_SIZE;

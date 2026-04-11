@@ -1,7 +1,7 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module decoder #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter INST_W = 32,
     parameter REG_W = 6
 ) (

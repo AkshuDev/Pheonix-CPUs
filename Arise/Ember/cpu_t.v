@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module tb_cpu;
     reg clk;
@@ -9,28 +9,39 @@ module tb_cpu;
         .rst(rst)
     );
 
+    reg [7:0] program_bytes [0:4096];
+
+    initial begin
+        integer fd;
+        fd = $fopen("tests/program.pvcpu64.hex", "rb");
+        $fread(program_bytes, fd);
+        $fclose(fd);
+    end
+
     // Clock generation
     initial begin
         clk = 0;
-        forever #5 clk = ~clk;
+        forever #125 clk = ~clk;
+    end
+
+    initial begin
+        integer i;
+        for (i = 0; i < 128; i = i + 4) begin
+            uut.l3.mem[i] = program_bytes[i];
+            uut.l3.mem[i + 1] = program_bytes[i + 1];
+            uut.l3.mem[i + 2] = program_bytes[i + 2];
+            uut.l3.mem[i + 3] = program_bytes[i + 3];
+        end
+        $display("RESET DEASSERTED, PROGRAM LOADED");
     end
 
     // Program load and reset
     initial begin
         rst = 1'b1;
-        #20;
+        #126;
         rst = 1'b0;
 
-        // Load a test instruction into L3 memory
-        // MOV G1, #1
-        uut.l3.mem[3] = 8'b00010001; // LSB, Opcode [0:7] (0:7)
-        uut.l3.mem[2] = 8'b01010010; // Opcode [8:11] + Mode [0:3] (8:15)
-        uut.l3.mem[1] = 8'b00001000; // RSrc [0:5] + RDst [0:1] (16:23)
-        uut.l3.mem[0] = 8'b00010001; // MSB, RDst [2:5] + Flags [0:3] (24:31)
-
-        $display("RESET DEASSERTED, PROGRAM LOADED");
-
-        #5000; // Run for sufficient cycles
+        #125000; // Run for sufficient cycles
 
         $display("SIMULATION COMPLETE");
         $finish;

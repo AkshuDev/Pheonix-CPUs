@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module thread #(
     DATA_W = 64,
@@ -54,6 +54,8 @@ module thread #(
     localparam ST_EXECUTE_P3 = 4'd7;
     localparam ST_LOCKED = 4'd8;
 
+    localparam INSTS_PER_FETCH = DATA_W / INST_W;
+
     reg [3:0] state, next_state;
 
     // Inernal State
@@ -98,8 +100,12 @@ module thread #(
 
     // Instruction Buffer
     reg [INST_W-1:0] inst;
+    reg [DATA_W-1:0] full_fetch_data;
+    reg fetch_base;
     reg inst_valid;
+    reg force_fetch;
 
+    wire fetch_needed = fetch_base > INSTS_PER_FETCH || force_fetch;
     wire fetch_request = (!l1i_hit || !l1i_ready);
 
     // Register File
@@ -170,6 +176,7 @@ module thread #(
             rf_wr_en <= 0;
             write_pc <= 1;
             pc_wr_data <= 0;
+            force_fetch <= 1; // Ensure fetch
         end else begin
             state <= next_state;
 
@@ -188,26 +195,37 @@ module thread #(
                 end
 
                 ST_FETCH: begin
-                    // Request instruction from L1-I
-                    if (!l1i_hit || !l1i_ready) begin
-                        l1i_rd_en <= 1'b1;
-                        l1i_addr <= pc;
+                    if (!fetch_needed) begin
+                        fetch_base <= fetch_base + 1;
+                        inst <= full_fetch_data[fetch_base*INST_W +: INST_W];
                     end else begin
-                        l1i_rd_en <= 0;
-                        inst <= l1i_rdata[INST_W-1:0];
-                        inst_valid <= 1'b1;
-                        write_pc <= 1;
-                        pc_wr_data <= pc + 4;
+                        // Request instruction from L1-I
+                        if (!l1i_hit || !l1i_ready) begin
+                            l1i_rd_en <= 1'b1;
+                            l1i_addr <= pc;
+                        end else begin
+                            l1i_rd_en <= 0;
+                            full_fetch_data <= l1i_rdata;
+                            inst <= l1i_rdata[INST_W-1:0];
+                            inst_valid <= 1'b1;
+                            write_pc <= 1;
+                            pc_wr_data <= pc + 4;
+                            fetch_base <= 0;
+                            force_fetch <= 0;
+                        end
                     end
                 end
 
                 ST_WAIT_L1I: begin
                     if (l1i_ready && l1i_hit) begin
                         l1i_rd_en <= 0;
+                        full_fetch_data <= l1i_rdata;
                         inst <= l1i_rdata[INST_W-1:0];
                         inst_valid <= 1'b1;
                         pc_wr_data <= pc + 4;
                         write_pc <= 1;
+                        fetch_base <= 0;
+                        force_fetch <= 0;
                     end
                 end
 
@@ -307,7 +325,7 @@ module thread #(
             ST_IDLE: if (enable) next_state = ST_FETCH;
 
             ST_FETCH: begin
-                if (fetch_request)
+                if (fetch_request && fetch_needed)
                     next_state = ST_WAIT_L1I;
                 else
                     next_state = ST_DECODE;

@@ -1,9 +1,9 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 // Register File - NULL, G0-G30, SF, LR, SP (6 bits)
 
 module regfile #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter NUM_REGS = 34,
     parameter REG_ADDR_W = 6 // 6 bits 
 )

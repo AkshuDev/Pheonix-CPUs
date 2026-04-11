@@ -1,7 +1,7 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module alu #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter OP_W = 8
 ) (
     // Input

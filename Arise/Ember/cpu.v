@@ -1,21 +1,23 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module cpu (
-    input wire clk,
-    input wire rst
+    input wire clk, // from local PLL or something
+    input wire rst // Active low and needs clk
 );
-    localparam L3_SIZE = 1024; // 32MB in reality (33554432 or 1024*1024*32)
-    localparam LINE_SIZE = 8;
+    localparam L3_SIZE = 4096; // 32MB in reality (33554432 or 1024*1024*32)
+    localparam LINE_SIZE = 64;
     localparam LINE_BYTES = LINE_SIZE * 8;
+    localparam DATA_W = 512;
+    localparam ADDR_W = 64;
 
     // L3 memory interface
     reg l3_rd_en, l3_wr_en;
-    reg [63:0] l3_addr;
-    reg [63:0] l3_wr_data;
-    wire [63:0] l3_rdata;
+    reg [DATA_W-1:0] l3_addr;
+    reg [DATA_W-1:0] l3_wr_data;
+    wire [DATA_W-1:0] l3_rdata;
     wire l3_ready;
 
-    mem #(.DEPTH(L3_SIZE), .DATA_W(64)) l3 (
+    mem #(.DEPTH(L3_SIZE), .DATA_W(DATA_W)) l3 (
         .clk(clk),
         .rst(rst),
         .rd_en(l3_rd_en),
@@ -29,10 +31,10 @@ module cpu (
 
     // Supercores
     wire sc0_req, sc1_req;
-    wire [63:0] sc0_addr, sc1_addr;
-    wire [63:0] sc0_wdata, sc1_wdata;
+    wire [ADDR_W-1:0] sc0_addr, sc1_addr;
+    wire [DATA_W-1:0] sc0_wdata, sc1_wdata;
     wire sc0_wr, sc1_wr;
-    reg [63:0] sc0_rdata, sc1_rdata;
+    reg [DATA_W-1:0] sc0_rdata, sc1_rdata;
     reg sc0_ready, sc1_ready;
 
     supercore sc0 (
@@ -65,7 +67,7 @@ module cpu (
     reg [1:0] cpu_state;
     reg grant_which_sc; // 0 = SC0, 1 = SC1
     reg [3:0] lane;
-    reg [63:0] current_addr;
+    reg [DATA_W-1:0] current_addr;
 
     always @(posedge clk) begin
         if (rst) begin

@@ -1,11 +1,11 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module cache_controller #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter ADDR_W = 64,
     parameter NUM_LINES = 1024,
     parameter SIZE = 65536,
-    parameter LINE_SIZE = 8
+    parameter LINE_SIZE = 64
 ) (
     // Basic
     input wire clk,
@@ -41,11 +41,13 @@ module cache_controller #(
     localparam INDEX_BITS = $clog2(NUM_LINES);
     localparam TAG_BITS = ADDR_W - INDEX_BITS - OFFSET_BITS;
 
+    localparam ADDR_INDEX_H = OFFSET_BITS + INDEX_BITS - 1;
+    localparam ADDR_INDEX_L = OFFSET_BITS;
+
     // Protcol and Connections and Setup
     typedef enum logic [2:0] {M,O,E,S,I} state_t;
     typedef enum logic [2:0] {
         IDLE, // Waiting for a read/write
-        LOOKUP, // Check cache tags/state
         WRITEBACK, // Its pretty obvious
         MEM_REQ, // Request external memory
         MEM_WAIT, // Wait for memory response
@@ -75,7 +77,7 @@ module cache_controller #(
     wire need_writeback;
 
     assign tag = reg_addr[ADDR_W-1:ADDR_W-TAG_BITS];
-    assign index = reg_addr[OFFSET_BITS+INDEX_BITS-1:OFFSET_BITS];
+    assign index = reg_addr[ADDR_INDEX_H:ADDR_INDEX_L];
 
     assign tag_match = (tag_array[index] == tag);
     assign valid = (state[index] != I);
@@ -89,7 +91,6 @@ module cache_controller #(
 
     // Reset Protocol
     integer i;
-    integer lookup_cycles;
     // FSM Sequential
     always @(posedge clk) begin
         if (rst) begin
@@ -102,7 +103,6 @@ module cache_controller #(
             reg_wdata <= 0;
             reg_rd <= 0;
             reg_wr <= 0;
-            lookup_cycles <= 0;
 
             for (i=0;i<NUM_LINES;i=i+1)
                 state[i] <= I;
@@ -119,22 +119,28 @@ module cache_controller #(
                     hit <= 0;
                     mem_req <= 0;
                     using_mem <= 0;
-                    lookup_cycles <= 0;
                     
                     if (rd_en || wr_en) begin
                         reg_addr <= addr;
                         reg_wdata <= wr_data;
                         reg_rd <= rd_en;
                         reg_wr <= wr_en;
+                        hit <= (tag_array[addr[ADDR_INDEX_H:ADDR_INDEX_L]] == addr[ADDR_W-1:ADDR_W-TAG_BITS]) & (state[addr[ADDR_INDEX_H:ADDR_INDEX_L]] != I);
+                        if ((tag_array[addr[ADDR_INDEX_H:ADDR_INDEX_L]] == addr[ADDR_W-1:ADDR_W-TAG_BITS]) & (state[addr[ADDR_INDEX_H:ADDR_INDEX_L]] != I)) begin
+                            if (rd_en) begin
+                                rd_data <= data_array[addr[ADDR_INDEX_H:ADDR_INDEX_L]];
+                                ready <= 1;
+                            end
+                            if (wr_en) begin
+                                data_array[addr[ADDR_INDEX_H:ADDR_INDEX_L]] <= wr_data;
+                                state[addr[ADDR_INDEX_H:ADDR_INDEX_L]] <= M;
+                                ready <= 1;
+                            end
+                        end
                     end else if (invalidate) begin
-                        state[invalidate_addr[OFFSET_BITS+INDEX_BITS-1:OFFSET_BITS]] <= I;
+                        state[invalidate_addr[ADDR_INDEX_H:ADDR_INDEX_L]] <= I;
                         ready <= 1;
                     end
-                end
-
-                LOOKUP: begin
-                    lookup_cycles <= lookup_cycles + 1;
-                    hit <= hit_comb;
                 end
 
                 WRITEBACK: begin
@@ -202,12 +208,8 @@ module cache_controller #(
         case (state_fsm)
             IDLE: 
                 if (rd_en || wr_en)
-                    next_state_fsm = LOOKUP;
-
-            LOOKUP:
-                if (lookup_cycles > 1)
                     if (hit_comb)
-                        next_state_fsm = UPDATE;
+                        next_state_fsm = IDLE;
                     else if (need_writeback)
                         next_state_fsm = WRITEBACK;
                     else

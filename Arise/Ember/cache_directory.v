@@ -1,10 +1,10 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module cache_directory #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter ADDR_W = 64,
     parameter NUM_LINES = 1024,
-    parameter LINE_SIZE = 8,
+    parameter LINE_SIZE = 64,
     parameter CORE_COUNT = 4
 ) (
     input wire clk,

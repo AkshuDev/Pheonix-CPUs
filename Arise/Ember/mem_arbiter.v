@@ -1,9 +1,9 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module mem_arbiter #(
     parameter NUM_CORES = 8,
     parameter ADDR_W = 64,
-    parameter DATA_W = 64
+    parameter DATA_W = 512
 )(
     input wire clk,
     input wire rst,

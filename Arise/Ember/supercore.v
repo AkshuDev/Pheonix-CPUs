@@ -1,18 +1,18 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 
 module supercore #(
-    parameter DATA_W = 64,
+    parameter DATA_W = 512,
     parameter ADDR_W = 64,
     parameter NUM_CORES = 4,
-    parameter LINE_SIZE = 8,
-    parameter L2_SIZE = 512 // 512KB in reality (1024*512)
+    parameter LINE_SIZE = 64,
+    parameter L2_SIZE = 2048 // 512KB in reality (1024*512)
 ) (
     input wire clk,
     input wire rst,
 
     // Memory inerface
     output wire mem_req,
-    output wire [DATA_W-1:0] mem_addr,
+    output wire [ADDR_W-1:0] mem_addr,
     output wire [DATA_W-1:0] mem_wdata,
     output wire mem_wr,
     input wire [DATA_W-1:0] mem_rdata,
